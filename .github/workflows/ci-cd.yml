@@ -1,0 +1,70 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-and-build:
+    name: Build & Validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/cedex_dummy?schema=public' }}
+
+      - name: Run Next.js Production Build
+        run: npm run build
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/cedex_dummy?schema=public' }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET || 'temporary-build-secret-value-32chars-minimum' }}
+          NEXT_PUBLIC_APP_URL: "https://cedexlogistics.com"
+
+  deploy:
+    name: Deploy to Production
+    needs: validate-and-build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Option A: Vercel Production Deployment
+      # Uncomment if hosting on Vercel:
+      # - name: Deploy to Vercel
+      #   uses: amondnet/vercel-action@v25
+      #   with:
+      #     vercel-token: ${{ secrets.VERCEL_TOKEN }}
+      #     vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+      #     vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+      #     vercel-args: '--prod'
+
+      # Option B: Webhook-based trigger (Railway / Render / CapRover / Coolify)
+      # Uncomment if using a deploy hook:
+      # - name: Trigger Host Deploy Hook
+      #   run: |
+      #     curl -X POST "${{ secrets.DEPLOY_HOOK_URL }}"
+
+      - name: Deployment Step Ready
+        run: echo "Production build validated. Ready for deployment hook integration."
