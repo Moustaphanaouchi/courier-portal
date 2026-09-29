@@ -1,0 +1,168 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+  schemas   = ["courier"]
+}
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+enum Role {
+  COURIER_ADMIN
+  MERCHANT
+  DRIVER
+
+  @@schema("courier")
+}
+
+enum DeliveryStatus {
+  DRAFT
+  READY_FOR_PICKUP
+  PICKED_UP
+  AT_HUB
+  OUT_FOR_DELIVERY
+  DELIVERED
+  FAILED_ATTEMPT
+  RETURNED
+  CANCELED
+
+  @@schema("courier")
+}
+
+enum Currency {
+  USD
+  LBP
+
+  @@schema("courier")
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  phone        String    @unique
+  passwordHash String
+  role         Role      @default(MERCHANT)
+  name         String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  merchantProfile Merchant?
+  driverProfile   Driver?
+
+  @@index([role])
+  @@schema("courier")
+}
+
+model Merchant {
+  id            String          @id @default(cuid())
+  userId        String          @unique
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName   String
+  pickupAddress String
+  pickupCity    String
+  defaultNote   String?
+
+  parcels       Parcel[]
+  payouts       MerchantPayout[]
+
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@schema("courier")
+}
+
+model Driver {
+  id              String             @id @default(cuid())
+  userId          String             @unique
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vehicleType     String?
+  plateNumber     String?
+  isActive        Boolean            @default(true)
+
+  assignedParcels  Parcel[]
+  dailySettlements DriverSettlement[]
+
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@schema("courier")
+}
+
+model Parcel {
+  id                String          @id @default(cuid())
+  trackingNumber    String          @unique
+
+  merchantId        String
+  merchant          Merchant        @relation(fields: [merchantId], references: [id])
+  driverId          String?
+  driver            Driver?         @relation(fields: [driverId], references: [id])
+
+  recipientName     String
+  recipientPhone    String
+  recipientAltPhone String?
+  governorate       String
+  city              String
+  detailedAddress   String
+  landmark          String?
+
+  status            DeliveryStatus  @default(READY_FOR_PICKUP)
+  codAmount         Decimal         @default(0.0)
+  codCurrency       Currency        @default(USD)
+  deliveryFee       Decimal         @default(3.0)
+
+  isCodCollected    Boolean         @default(false)
+  isMerchantPaid    Boolean         @default(false)
+  payoutId          String?
+  payout            MerchantPayout? @relation(fields: [payoutId], references: [id])
+
+  notes             String?
+  deliveryAttempts  Int             @default(0)
+  deliveredAt       DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([status])
+  @@index([merchantId])
+  @@index([driverId])
+  @@index([trackingNumber])
+  @@schema("courier")
+}
+
+model DriverSettlement {
+  id                String    @id @default(cuid())
+  driverId          String
+  driver            Driver    @relation(fields: [driverId], references: [id])
+  settlementDate    DateTime  @default(now())
+
+  totalCollectedUsd Decimal   @default(0.0)
+  totalCollectedLbp Decimal   @default(0.0)
+  cashHandedOver    Boolean   @default(false)
+  verifiedByAdmin   Boolean   @default(false)
+  adminNote         String?
+
+  createdAt         DateTime  @default(now())
+
+  @@schema("courier")
+}
+
+model MerchantPayout {
+  id              String    @id @default(cuid())
+  merchantId      String
+  merchant        Merchant  @relation(fields: [merchantId], references: [id])
+
+  grossCodUsd     Decimal
+  totalFeesUsd    Decimal
+  netPayoutUsd    Decimal
+
+  paymentMethod   String
+  referenceNumber String?
+  isSettled       Boolean   @default(false)
+
+  parcels         Parcel[]
+  createdAt       DateTime  @default(now())
+
+  @@schema("courier")
+}

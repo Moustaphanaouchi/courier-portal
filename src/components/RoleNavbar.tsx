@@ -1,0 +1,212 @@
+﻿"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { 
+  Package, 
+  Truck, 
+  ShieldAlert, 
+  Receipt, 
+  LogOut, 
+  User, 
+  FileSpreadsheet, 
+  Search, 
+  Printer,
+  ChevronDown
+} from "lucide-react";
+
+interface SessionUser {
+  userId: string;
+  name: string;
+  email: string;
+  role: "COURIER_ADMIN" | "DRIVER" | "MERCHANT";
+}
+
+export default function RoleNavbar() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const [user, setUser] = useState<SessionUser | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function checkSession() {
+      try {
+        const res = await fetch("/api/auth/me");
+        const data = await res.json();
+        if (data.authenticated && data.user) {
+          setUser(data.user);
+        } else {
+          setUser(null);
+        }
+      } catch {
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    }
+    checkSession();
+  }, [pathname]);
+
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    setUser(null);
+    router.push("/login");
+    router.refresh();
+  }
+
+  // Hide Navbar inside thermal print mode
+  if (pathname.includes("/waybill")) return null;
+
+  return (
+    <nav className="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-40 print:hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+        {/* Brand */}
+        <div className="flex items-center gap-6">
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-black text-white">
+              <Package className="w-4 h-4" />
+            </div>
+            <div className="leading-tight">
+              <span className="font-bold text-sm tracking-tight block">Courier Portal</span>
+              <span className="text-[10px] text-slate-400">Cedex Logistics</span>
+            </div>
+          </Link>
+
+          {/* Role-Specific Navigation Links */}
+          <div className="hidden md:flex items-center gap-1 text-xs font-semibold">
+            {/* Admin Links */}
+            {user?.role === "COURIER_ADMIN" && (
+              <>
+                <Link
+                  href="/admin/dispatch"
+                  className={`px-3 py-1.5 rounded-lg transition ${
+                    pathname === "/admin/dispatch" ? "bg-slate-800 text-blue-400" : "text-slate-300 hover:text-white"
+                  }`}
+                >
+                  Dispatch Board
+                </Link>
+                <Link
+                  href="/admin/settlements"
+                  className={`px-3 py-1.5 rounded-lg transition ${
+                    pathname === "/admin/settlements" ? "bg-slate-800 text-emerald-400" : "text-slate-300 hover:text-white"
+                  }`}
+                >
+                  Cash Settlements
+                </Link>
+                <Link
+                  href="/admin/parcels/print-batch"
+                  className={`px-3 py-1.5 rounded-lg transition ${
+                    pathname === "/admin/parcels/print-batch" ? "bg-slate-800 text-purple-400" : "text-slate-300 hover:text-white"
+                  }`}
+                >
+                  Batch Waybills
+                </Link>
+              </>
+            )}
+
+            {/* Merchant Links */}
+            {user?.role === "MERCHANT" && (
+              <>
+                <Link
+                    href="/merchant/parcels"
+                    className={`px-3 py-1.5 rounded-lg transition ${
+                      pathname === "/merchant/parcels" ? "bg-slate-800 text-blue-400 font-semibold" : "text-slate-300 hover:text-white"
+                    }`}
+                  >
+                    📦 All Parcels
+                  </Link>
+                  <Link
+                  href="/merchant/parcels/new"
+                  className={`px-3 py-1.5 rounded-lg transition ${
+                    pathname === "/merchant/parcels/new" ? "bg-slate-800 text-blue-400" : "text-slate-300 hover:text-white"
+                  }`}
+                >
+                  New Order
+                </Link>
+                <Link
+                  href="/merchant/parcels/import"
+                  className={`px-3 py-1.5 rounded-lg transition ${
+                    pathname === "/merchant/parcels/import" ? "bg-slate-800 text-blue-400" : "text-slate-300 hover:text-white"
+                  }`}
+                >
+                  CSV Bulk Upload
+                </Link>
+                <Link
+                  href="/merchant/payouts"
+                  className={`px-3 py-1.5 rounded-lg transition ${
+                    pathname === "/merchant/payouts" ? "bg-slate-800 text-emerald-400" : "text-slate-300 hover:text-white"
+                  }`}
+                >
+                  COD Payouts
+                </Link>
+              </>
+            )}
+
+            {/* Driver Links */}
+            {user?.role === "DRIVER" && (
+              <Link
+                href="/driver/run"
+                className={`px-3 py-1.5 rounded-lg transition ${
+                  pathname === "/driver/run" ? "bg-slate-800 text-emerald-400" : "text-slate-300 hover:text-white"
+                }`}
+              >
+                My Delivery Run
+              </Link>
+            )}
+
+            {/* Shared Public Link */}
+            <Link
+              href="/track"
+              className="px-3 py-1.5 rounded-lg text-slate-300 hover:text-white transition flex items-center gap-1"
+            >
+              <Search className="w-3 h-3 text-slate-400" />
+              <span>Track Parcel</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* User Identity & Logout Controls */}
+        <div className="flex items-center gap-3">
+          {loading ? (
+            <div className="w-20 h-7 bg-slate-800 animate-pulse rounded-lg" />
+          ) : user ? (
+            <div className="flex items-center gap-3">
+              <div className="text-right hidden sm:block">
+                <div className="text-xs font-bold leading-none text-slate-200">{user.name}</div>
+                <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">
+                  {user.role === "COURIER_ADMIN" ? "Hub Admin" : user.role}
+                </div>
+              </div>
+
+              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                user.role === "COURIER_ADMIN"
+                  ? "bg-purple-900/60 text-purple-300 border border-purple-700"
+                  : user.role === "DRIVER"
+                  ? "bg-emerald-900/60 text-emerald-300 border border-emerald-700"
+                  : "bg-blue-900/60 text-blue-300 border border-blue-700"
+              }`}>
+                {user.role === "COURIER_ADMIN" ? "Admin" : user.role}
+              </span>
+
+              <button
+                onClick={handleLogout}
+                className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-red-400 transition"
+                title="Sign Out"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition"
+            >
+              Sign In
+            </Link>
+          )}
+        </div>
+      </div>
+    </nav>
+  );
+}
