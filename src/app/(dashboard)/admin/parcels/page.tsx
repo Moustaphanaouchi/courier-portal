@@ -89,7 +89,7 @@ export default async function AdminParcelsPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
-                      {parcel.codAmount} {parcel.codCurrency}
+                      {parcel.codAmount != null ? parcel.codAmount.toString() : '0.00'} {parcel.codCurrency}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-gray-700">
                       {parcel.merchant?.companyName || '—'}
