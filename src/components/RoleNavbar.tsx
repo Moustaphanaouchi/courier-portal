@@ -3,15 +3,15 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { 
-  Package, 
+import {
+  Package,
   Truck, 
-  ShieldAlert, 
-  Receipt, 
-  LogOut, 
-  User, 
-  FileSpreadsheet, 
-  Search, 
+  ShieldAlert,
+  Receipt,
+  LogOut,
+  User,
+  FileSpreadsheet,
+  Search,
   Printer,
   ChevronDown
 } from "lucide-react";
@@ -79,6 +79,14 @@ export default function RoleNavbar() {
             {user?.role === "COURIER_ADMIN" && (
               <>
                 <Link
+                  href="/admin/parcels"
+                  className={`px-3 py-1.5 rounded-lg transition ${
+                    pathname === "/admin/parcels" ? "bg-slate-800 text-blue-400 font-semibold" : "text-slate-300 hover:text-white"
+                  }`}
+                >
+                  All Parcels
+                </Link>
+                <Link
                   href="/admin/dispatch"
                   className={`px-3 py-1.5 rounded-lg transition ${
                     pathname === "/admin/dispatch" ? "bg-slate-800 text-blue-400" : "text-slate-300 hover:text-white"
@@ -109,14 +117,14 @@ export default function RoleNavbar() {
             {user?.role === "MERCHANT" && (
               <>
                 <Link
-                    href="/merchant/parcels"
-                    className={`px-3 py-1.5 rounded-lg transition ${
-                      pathname === "/merchant/parcels" ? "bg-slate-800 text-blue-400 font-semibold" : "text-slate-300 hover:text-white"
-                    }`}
-                  >
-                    📦 All Parcels
-                  </Link>
-                  <Link
+                  href="/merchant/parcels"
+                  className={`px-3 py-1.5 rounded-lg transition ${
+                    pathname === "/merchant/parcels" ? "bg-slate-800 text-blue-400 font-semibold" : "text-slate-300 hover:text-white"
+                  }`}
+                >
+                  📦 All Parcels
+                </Link>
+                <Link
                   href="/merchant/parcels/new"
                   className={`px-3 py-1.5 rounded-lg transition ${
                     pathname === "/merchant/parcels/new" ? "bg-slate-800 text-blue-400" : "text-slate-300 hover:text-white"
