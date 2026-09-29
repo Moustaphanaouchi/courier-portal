@@ -24,7 +24,8 @@
     "typescript": "7.0.2"
   },
   "scripts": {
-    "build": "next build",
+    "postinstall": "prisma generate",
+    "build": "prisma generate && next build",
     "start": "next start",
     "dev": "next dev",
     "lint": "next lint",
