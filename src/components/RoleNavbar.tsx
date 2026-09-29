@@ -94,6 +94,14 @@ export default function RoleNavbar() {
                 >
                   Dispatch Board
                 </Link>
+                                <Link
+                  href="/admin/payouts"
+                  className={`px-3 py-1.5 rounded-lg transition ${
+                    pathname === "/admin/payouts" ? "bg-slate-800 text-emerald-400 font-semibold" : "text-slate-300 hover:text-white"
+                  }`}
+                >
+                  Merchant Payouts
+                </Link>
                 <Link
                   href="/admin/settlements"
                   className={`px-3 py-1.5 rounded-lg transition ${
