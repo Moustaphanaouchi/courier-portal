@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
@@ -234,39 +234,58 @@ export default function AdminBatchPrintPage() {
               </div>
 
               {/* Sender & Destination Grid */}
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div className="border border-slate-200 p-3 rounded-lg print:border-slate-400">
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div className="border border-slate-200 p-3 rounded-lg print:border-slate-400 overflow-hidden min-w-0">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                     SENDER / MERCHANT
                   </p>
-                  <p className="text-sm font-bold text-slate-900">{parcel.merchant.companyName}</p>
-                  <p className="text-xs text-slate-600 mt-0.5">
-                    {parcel.merchant.pickupCity || "Lebanon Hub"}
+                  <p className="text-sm font-bold text-slate-900 truncate">{parcel.merchant.companyName}</p>
+                  <p className="text-xs font-medium text-slate-700 mt-0.5 truncate">
+                    📍 {parcel.merchant.pickupCity || "Lebanon Hub"}
                   </p>
-                  <p className="text-xs font-mono text-slate-600 mt-1">
-                    {parcel.merchant.user?.phone || "+961 3 448 482"}
+                  {parcel.merchant.pickupAddress && (
+                    <p className="text-[11px] text-slate-500 break-words leading-tight mt-1 line-clamp-2">
+                      {parcel.merchant.pickupAddress}
+                    </p>
+                  )}
+                  <p className="text-xs font-mono text-slate-600 mt-1 font-semibold">
+                    📞 {parcel.merchant.user?.phone || "+961 3 448 482"}
                   </p>
                 </div>
 
-                <div className="border-2 border-slate-900 p-3 rounded-lg bg-slate-50/50 print:bg-transparent print:border-black">
-                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                    RECIPIENT / DESTINATION
-                  </p>
-                  <p className="text-base font-black text-slate-900 leading-tight">
-                    {parcel.recipientName}
-                  </p>
-                  <p className="text-sm font-bold font-mono text-slate-900 mt-0.5">
-                    {parcel.recipientPhone}
-                  </p>
-                  {parcel.recipientAltPhone && (
-                    <p className="text-xs font-mono text-slate-600">Alt: {parcel.recipientAltPhone}</p>
-                  )}
-                  <p className="text-xs text-slate-700 mt-1.5 font-medium leading-relaxed">
-                    {parcel.detailedAddress || "Standard Address"}
-                  </p>
-                  <p className="text-xs font-bold text-slate-900 uppercase mt-0.5">
-                    {parcel.city}, {parcel.governorate}
-                  </p>
+                <div className="border-2 border-slate-900 p-3 rounded-lg bg-slate-50/50 print:bg-transparent print:border-black overflow-hidden min-w-0 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                        RECIPIENT / DESTINATION
+                      </p>
+                      <span className="text-[10px] font-bold font-mono px-1.5 py-0.5 bg-slate-200 print:bg-slate-100 rounded text-slate-900 uppercase">
+                        {parcel.city}
+                      </span>
+                    </div>
+                    <p className="text-sm font-black text-slate-900 leading-snug break-words">
+                      {parcel.recipientName}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2 mt-1">
+                      <span className="text-xs font-bold font-mono text-slate-900">
+                        📞 {parcel.recipientPhone}
+                      </span>
+                      {parcel.recipientAltPhone && (
+                        <span className="text-[11px] font-mono text-slate-600">
+                          / {parcel.recipientAltPhone}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="mt-2 pt-2 border-t border-slate-200 print:border-slate-300">
+                    <p className="text-[11px] text-slate-800 font-medium leading-snug break-words">
+                      {parcel.detailedAddress || "Standard Delivery"}
+                    </p>
+                    <p className="text-[10px] font-extrabold text-slate-900 uppercase mt-1 tracking-wide">
+                      {parcel.city} • {parcel.governorate}
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -295,7 +314,7 @@ export default function AdminBatchPrintPage() {
               {/* Footer */}
               <div className="text-center pt-2 border-t border-slate-200 flex justify-between items-center text-[10px] text-slate-500">
                 <span>Cedex Logistics Express Network</span>
-                <span>Track: http://localhost:3000/track/{parcel.trackingNumber}</span>
+                <span>Track: cedex.express/track/{parcel.trackingNumber}</span>
               </div>
             </div>
           );
