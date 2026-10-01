@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { Package, ArrowLeft } from "lucide-react";
 
 export default function PrivacyPage() {
@@ -54,7 +54,7 @@ export default function PrivacyPage() {
           <section className="space-y-2">
             <h2 className="text-base font-bold text-slate-900">4. Contact Inquiries</h2>
             <p>
-              For privacy inquiries, data deletion requests, or merchant account management, contact our compliance team at <strong>privacy@cedexlogistics.com</strong> or call +961 3 448 482.
+              For privacy inquiries, data deletion requests, or merchant account management, contact our compliance team at <strong>mnaouchi@outlook.com</strong>.
             </p>
           </section>
         </div>

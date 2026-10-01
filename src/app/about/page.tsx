@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { Package, ShieldCheck, MapPin, Truck, Phone, ArrowLeft } from "lucide-react";
 
 export default function AboutPage() {
@@ -66,7 +66,7 @@ export default function AboutPage() {
           </p>
           <p className="text-xs text-slate-600 flex items-center gap-2">
             <Phone className="w-4 h-4 text-slate-400" />
-            Support: +961 3 448 482 | Dispatch Operations: +90 545 682 8864
+            Support: +961 3 448 482 | Direct: +90 545 682 8864</p>
           </p>
         </div>
       </main>

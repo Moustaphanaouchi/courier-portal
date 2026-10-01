@@ -270,7 +270,7 @@ export default function NewParcelPage() {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Maya El Hajj"
+                    placeholder="e.g. Recipient Full Name"
                     value={recipientName}
                     onChange={(e) => setRecipientName(e.target.value)}
                     className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -499,3 +499,4 @@ export default function NewParcelPage() {
     </div>
   );
 }
+

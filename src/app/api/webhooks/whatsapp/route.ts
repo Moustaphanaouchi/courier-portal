@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendOutForDeliveryWhatsApp } from "@/lib/whatsapp";
 
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
           recipientPhone: parcel.recipientPhone,
           trackingNumber: parcel.trackingNumber,
           driverName: (parcel as any).driver?.user?.name || "Cedex Courier",
-          driverPhone: (parcel as any).driver?.user?.phone || "+961 3 448 482",
+          driverPhone: (parcel as any).driver?.user?.phone || "+961 1 000 000",
           codAmount: Number(parcel.codAmount),
           codCurrency: parcel.codCurrency as "USD" | "LBP",
         });

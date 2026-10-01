@@ -212,7 +212,7 @@ export default function AdminBatchPrintPage() {
                     CEDEX LOGISTICS
                   </h1>
                   <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mt-1">
-                    Express Dispatch & COD Services | Lebanon: +961 3 448 482
+                    Express Dispatch & COD Services | Express Network Support: support@cedex.express
                   </p>
                 </div>
                 <div className="text-right">
@@ -249,7 +249,7 @@ export default function AdminBatchPrintPage() {
                     </p>
                   )}
                   <p className="text-xs font-mono text-slate-600 mt-1 font-semibold">
-                    📞 {parcel.merchant.user?.phone || "+961 3 448 482"}
+                    📞 {parcel.merchant.user?.phone || "N/A"}
                   </p>
                 </div>
 
@@ -323,3 +323,4 @@ export default function AdminBatchPrintPage() {
     </div>
   );
 }
+
