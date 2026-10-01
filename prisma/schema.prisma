@@ -116,7 +116,9 @@ model Parcel {
   isCodCollected    Boolean         @default(false)
   isMerchantPaid    Boolean         @default(false)
   payoutId          String?
-  payout            MerchantPayout? @relation(fields: [payoutId], references: [id])
+  settlementId      String?
+  payout            MerchantPayout?   @relation(fields: [payoutId], references: [id])
+  settlement        DriverSettlement? @relation(fields: [settlementId], references: [id])
 
   notes             String?
   deliveryAttempts  Int             @default(0)
@@ -144,6 +146,7 @@ model DriverSettlement {
   adminNote         String?
 
   createdAt         DateTime  @default(now())
+  parcels           Parcel[]
 
   @@schema("courier")
 }
