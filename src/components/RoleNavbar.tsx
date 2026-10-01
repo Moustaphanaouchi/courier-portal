@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Package,
-  Truck, 
+  Truck,
   ShieldAlert,
   Receipt,
   LogOut,
@@ -13,7 +13,9 @@ import {
   FileSpreadsheet,
   Search,
   Printer,
-  ChevronDown
+  ChevronDown,
+  Menu,
+  X
 } from "lucide-react";
 
 interface SessionUser {
@@ -28,6 +30,7 @@ export default function RoleNavbar() {
   const router = useRouter();
   const [user, setUser] = useState<SessionUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     async function checkSession() {
@@ -48,6 +51,11 @@ export default function RoleNavbar() {
     checkSession();
   }, [pathname]);
 
+  // Close mobile menu on page transition
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
+
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
     setUser(null);
@@ -55,16 +63,26 @@ export default function RoleNavbar() {
     router.refresh();
   }
 
-  // Hide Navbar inside thermal print mode
+  // Hide Navbar inside thermal print / waybill mode
   if (pathname.includes("/waybill")) return null;
 
   return (
     <nav className="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-40 print:hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
-        {/* Brand */}
-        <div className="flex items-center gap-6">
+        {/* Brand & Mobile Hamburger Toggle */}
+        <div className="flex items-center gap-3">
+          {user && (
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+              aria-label="Toggle navigation menu"
+            >
+              {isMobileMenuOpen ? <X className="w-5 h-5 text-white" /> : <Menu className="w-5 h-5" />}
+            </button>
+          )}
+
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-black text-white">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-black text-white shrink-0">
               <Package className="w-4 h-4" />
             </div>
             <div className="leading-tight">
@@ -73,8 +91,8 @@ export default function RoleNavbar() {
             </div>
           </Link>
 
-          {/* Role-Specific Navigation Links */}
-          <div className="hidden md:flex items-center gap-1 text-xs font-semibold">
+          {/* Desktop Navigation Links */}
+          <div className="hidden md:flex items-center gap-1 text-xs font-semibold ml-4">
             {/* Admin Links */}
             {user?.role === "COURIER_ADMIN" && (
               <>
@@ -94,7 +112,7 @@ export default function RoleNavbar() {
                 >
                   Dispatch Board
                 </Link>
-                                <Link
+                <Link
                   href="/admin/payouts"
                   className={`px-3 py-1.5 rounded-lg transition ${
                     pathname === "/admin/payouts" ? "bg-slate-800 text-emerald-400 font-semibold" : "text-slate-300 hover:text-white"
@@ -183,11 +201,11 @@ export default function RoleNavbar() {
         </div>
 
         {/* User Identity & Logout Controls */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {loading ? (
-            <div className="w-20 h-7 bg-slate-800 animate-pulse rounded-lg" />
+            <div className="w-16 sm:w-20 h-7 bg-slate-800 animate-pulse rounded-lg" />
           ) : user ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <div className="text-right hidden sm:block">
                 <div className="text-xs font-bold leading-none text-slate-200">{user.name}</div>
                 <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">
@@ -223,6 +241,114 @@ export default function RoleNavbar() {
           )}
         </div>
       </div>
+
+      {/* Mobile Drawer Menu (Visible when hamburger is clicked) */}
+      {isMobileMenuOpen && user && (
+        <div className="md:hidden border-t border-slate-800 bg-slate-900/95 backdrop-blur px-4 py-3 space-y-1 text-sm font-medium">
+          {/* Admin Mobile Links */}
+          {user.role === "COURIER_ADMIN" && (
+            <>
+              <Link
+                href="/admin/parcels"
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${
+                  pathname === "/admin/parcels" ? "bg-slate-800 text-blue-400 font-bold" : "text-slate-300"
+                }`}
+              >
+                <Package className="w-4 h-4" /> All Parcels
+              </Link>
+              <Link
+                href="/admin/dispatch"
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${
+                  pathname === "/admin/dispatch" ? "bg-slate-800 text-blue-400 font-bold" : "text-slate-300"
+                }`}
+              >
+                <Truck className="w-4 h-4" /> Dispatch Board
+              </Link>
+              <Link
+                href="/admin/payouts"
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${
+                  pathname === "/admin/payouts" ? "bg-slate-800 text-emerald-400 font-bold" : "text-slate-300"
+                }`}
+              >
+                <Receipt className="w-4 h-4" /> Merchant Payouts
+              </Link>
+              <Link
+                href="/admin/settlements"
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${
+                  pathname === "/admin/settlements" ? "bg-slate-800 text-emerald-400 font-bold" : "text-slate-300"
+                }`}
+              >
+                <ShieldAlert className="w-4 h-4" /> Cash Settlements
+              </Link>
+              <Link
+                href="/admin/parcels/print-batch"
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${
+                  pathname === "/admin/parcels/print-batch" ? "bg-slate-800 text-purple-400 font-bold" : "text-slate-300"
+                }`}
+              >
+                <Printer className="w-4 h-4" /> Batch Waybills
+              </Link>
+            </>
+          )}
+
+          {/* Merchant Mobile Links */}
+          {user.role === "MERCHANT" && (
+            <>
+              <Link
+                href="/merchant/parcels"
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${
+                  pathname === "/merchant/parcels" ? "bg-slate-800 text-blue-400 font-bold" : "text-slate-300"
+                }`}
+              >
+                <Package className="w-4 h-4" /> All Parcels
+              </Link>
+              <Link
+                href="/merchant/parcels/new"
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${
+                  pathname === "/merchant/parcels/new" ? "bg-slate-800 text-blue-400 font-bold" : "text-slate-300"
+                }`}
+              >
+                ➕ New Order
+              </Link>
+              <Link
+                href="/merchant/parcels/import"
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${
+                  pathname === "/merchant/parcels/import" ? "bg-slate-800 text-blue-400 font-bold" : "text-slate-300"
+                }`}
+              >
+                <FileSpreadsheet className="w-4 h-4" /> CSV Bulk Upload
+              </Link>
+              <Link
+                href="/merchant/payouts"
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${
+                  pathname === "/merchant/payouts" ? "bg-slate-800 text-emerald-400 font-bold" : "text-slate-300"
+                }`}
+              >
+                <Receipt className="w-4 h-4" /> COD Payouts
+              </Link>
+            </>
+          )}
+
+          {/* Driver Mobile Links */}
+          {user.role === "DRIVER" && (
+            <Link
+              href="/driver/run"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs ${
+                pathname === "/driver/run" ? "bg-slate-800 text-emerald-400 font-bold" : "text-slate-300"
+              }`}
+            >
+              <Truck className="w-4 h-4" /> My Delivery Run
+            </Link>
+          )}
+
+          <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400 px-3">
+            <span>Signed in as <b className="text-slate-200">{user.name}</b></span>
+            <button onClick={handleLogout} className="text-red-400 hover:underline">
+              Sign Out
+            </button>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
