@@ -34,6 +34,8 @@ export default function NewParcelPage() {
   const [codAmount, setCodAmount] = useState<number>(25);
   const [codCurrency, setCodCurrency] = useState<"USD" | "LBP">("USD");
   const [deliveryFee, setDeliveryFee] = useState<number>(3.0);
+  const [autoCalculatedFee, setAutoCalculatedFee] = useState<number>(3.0);
+  const [isCustomFee, setIsCustomFee] = useState<boolean>(false);
   const [weightKg, setWeightKg] = useState<number>(1);
   const [isSameDay, setIsSameDay] = useState<boolean>(false);
   const [isExchange, setIsExchange] = useState<boolean>(false);
@@ -77,8 +79,17 @@ export default function NewParcelPage() {
       exchangeExtra > 0 ? "Exchange (+$1.50)" : null,
     ].filter(Boolean).join(" • ");
 
-    setDeliveryFee(total);
+    setAutoCalculatedFee(total);
     setFeeBreakdown(parts);
+    if (!isCustomFee) {
+      setDeliveryFee(total);
+    }
+  }
+
+  // Force re-sync back to auto-calculated tariff
+  function resetToAutoFee() {
+    setDeliveryFee(autoCalculatedFee);
+    setIsCustomFee(false);
   }
 
   useEffect(() => {
