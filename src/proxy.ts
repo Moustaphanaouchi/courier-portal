@@ -1,7 +1,7 @@
 ﻿import { NextResponse } from "next/server";
-import type { NextRequest } from "next/request";
+import type { NextRequest } from "next/server";
 
-export function middleware(request: NextRequest) {
+export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const sessionCookie = request.cookies.get("courier_session");
 
