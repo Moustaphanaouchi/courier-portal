@@ -1,377 +1,324 @@
-"use client";
+﻿"use client";
 
-import { WhatsAppReceiptButton } from "@/components/WhatsAppReceiptButton";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { PackagePlus, CheckCircle2, ArrowLeft, Loader2, DollarSign, MapPin, Phone, User } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { ArrowLeft, Printer, Loader2, AlertCircle, RefreshCw, CheckSquare, Square } from "lucide-react";
+import { Barcode } from "@/components/Barcode";
 
-const LEBANON_REGIONS: Record<string, string[]> = {
-  "Beirut": ["Achrafieh", "Hamra", "Mar Mikhael", "Verdun", "Ras Beirut", "Badaro"],
-  "Mount Lebanon": ["Jounieh", "Jbeil (Byblos)", "Baabda", "Metn / Antelias", "Aley", "Chouf"],
-  "North": ["Tripoli", "El Mina", "Koura", "Zgharta", "Batroun", "Bsharri"],
-  "South": ["Saida (Sidon)", "Sour (Tyre)", "Jezzine"],
-  "Bekaa": ["Zahle", "Chtaura", "Baalbek", "West Bekaa"],
-  "Nabatieh": ["Nabatieh El Tahta", "Marjayoun", "Bint Jbeil", "Hasbaya"]
-};
+interface WaybillParcel {
+  id: string;
+  trackingNumber: string;
+  recipientName: string;
+  recipientPhone: string;
+  recipientAltPhone?: string | null;
+  governorate: string;
+  city: string;
+  detailedAddress: string;
+  codAmount: number | string;
+  codCurrency: "USD" | "LBP";
+  notes?: string | null;
+  status: string;
+  createdAt: string;
+  merchant: {
+    companyName: string;
+    pickupAddress: string;
+    pickupCity: string;
+    user?: {
+      phone: string;
+    };
+  };
+}
 
-export default function NewParcelPage() {
-  const router = useRouter();
-  const [merchantId, setMerchantId] = useState<string | null>(null);
-  const [loadingUser, setLoadingUser] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [successCode, setSuccessCode] = useState<string | null>(null);
+export default function AdminBatchPrintPage() {
+  const [parcels, setParcels] = useState<WaybillParcel[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Form state
-  const [recipientName, setRecipientName] = useState("");
-  const [recipientPhone, setRecipientPhone] = useState("");
-  const [recipientAltPhone, setRecipientAltPhone] = useState("");
-  const [governorate, setGovernorate] = useState("Beirut");
-  const [city, setCity] = useState("Hamra");
-  const [detailedAddress, setDetailedAddress] = useState("");
-  const [landmark, setLandmark] = useState("");
-  const [codAmount, setCodAmount] = useState<number>(25);
-  const [codCurrency, setCodCurrency] = useState<"USD" | "LBP">("USD");
-  const [deliveryFee, setDeliveryFee] = useState<number>(3.5);
-  const [notes, setNotes] = useState("");
-
-  useEffect(() => {
-    async function fetchUser() {
-      try {
-        const res = await fetch("/api/auth/me");
-        const data = await res.json();
-        if (data.authenticated && data.user.merchantId) {
-          setMerchantId(data.user.merchantId);
-        } else {
-          router.push("/login");
-        }
-      } catch {
-        router.push("/login");
-      } finally {
-        setLoadingUser(false);
-      }
-    }
-    fetchUser();
-  }, [router]);
-
-  // Adjust city options when governorate changes
-  const handleGovernorateChange = (gov: string) => {
-    setGovernorate(gov);
-    setCity(LEBANON_REGIONS[gov]?.[0] || "");
-  };
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!merchantId) return;
-
+  async function fetchParcels() {
+    setLoading(true);
     setError(null);
-    setSubmitting(true);
-
     try {
-      const res = await fetch("/api/parcels", {
+      const res = await fetch("/api/parcels/batch-labels", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          merchantId,
-          recipientName,
-          recipientPhone,
-          recipientAltPhone: recipientAltPhone || undefined,
-          governorate,
-          city,
-          detailedAddress,
-          landmark: landmark || undefined,
-          codAmount: Number(codAmount),
-          codCurrency,
-          deliveryFee: Number(deliveryFee),
-          notes: notes || undefined,
-        }),
+        body: JSON.stringify({}),
       });
 
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(typeof data.error === "string" ? data.error : "Failed to create parcel");
+      if (data.success && Array.isArray(data.parcels)) {
+        setParcels(data.parcels);
+        // Default: select all initially
+        setSelectedIds(new Set(data.parcels.map((p: WaybillParcel) => p.id)));
+      } else {
+        setError(data.error || "Failed to load parcel waybills.");
       }
-
-      setSuccessCode(data.parcel.trackingNumber);
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || "Failed to connect to batch API.");
     } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
   }
 
-  if (loadingUser) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <Loader2 className="w-6 h-6 animate-spin text-slate-500" />
-      </div>
-    );
+  useEffect(() => {
+    fetchParcels();
+  }, []);
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
   }
 
-  if (successCode) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-        <div className="max-w-md w-full bg-white p-8 rounded-2xl border border-slate-200 text-center shadow-sm">
-          <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-slate-900">Parcel Registered!</h2>
-          <p className="text-sm text-slate-500 mt-1">Ready for pickup at your registered store address.</p>
+  function toggleSelectAll() {
+    if (selectedIds.size === parcels.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(parcels.map((p) => p.id)));
+    }
+  }
 
-          <div className="mt-6 p-4 bg-slate-50 rounded-xl border border-slate-200 font-mono text-lg font-bold text-blue-600">
-            {successCode}
-          </div>
+  function printSelected() {
+    window.print();
+  }
 
-          <div className="mt-6 flex flex-col gap-2.5">
-              
-              {/* Direct Printable Waybill Link */}
-              <a
-                href={`/parcels/${successCode}/label`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-2.5 bg-slate-900 hover:bg-black text-white rounded-xl font-semibold text-sm transition flex items-center justify-center gap-2 shadow-sm"
-              >
-                <span>🖨️ Print Waybill / Thermal Label</span>
-              </a>
-
-{/* WhatsApp Verification Actions */}
-              <div className="flex flex-col gap-2 mb-2">
-                <WhatsAppReceiptButton
-                  phone={recipientPhone}
-                  parcel={{
-                    trackingNumber: successCode,
-                    recipientName,
-                    recipientPhone,
-                    city,
-                    codAmount,
-                    codCurrency,
-                    notes: (typeof notes !== "undefined" ? notes : "") || undefined,
-                  }}
-                  label="Send Receipt to Customer via WhatsApp"
-                />
-              </div>
-            <button
-              onClick={() => {
-                setSuccessCode(null);
-                setRecipientName("");
-                setRecipientPhone("");
-                setDetailedAddress("");
-              }}
-              className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm transition"
-            >
-              Add Another Parcel
-            </button>
-            <Link
-              href="/"
-              className="w-full py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg font-semibold text-sm transition text-center"
-            >
-              Back to Operations Hub
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
+  function printSingle(id: string) {
+    setSelectedIds(new Set([id]));
+    setTimeout(() => {
+      window.print();
+    }, 50);
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10 px-4">
-      <div className="max-w-3xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <Link href="/" className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-800 transition">
-            <ArrowLeft className="w-4 h-4 mr-1" /> Back to Dashboard
+    <div className="min-h-screen bg-slate-100 p-4 sm:p-8 print:bg-white print:p-0">
+      {/* Top Controls Toolbar (Hidden during print) */}
+      <div className="max-w-4xl mx-auto mb-6 flex flex-wrap items-center justify-between gap-4 print:hidden bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/admin/dispatch"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-slate-900 transition"
+          >
+            <ArrowLeft className="w-4 h-4" /> Back to Dispatch
           </Link>
-          <span className="text-xs bg-blue-50 text-blue-700 font-semibold px-2.5 py-1 rounded-full border border-blue-200">
-            Merchant Parcel Entry
-          </span>
+          <span className="text-slate-300">|</span>
+          <button
+            onClick={toggleSelectAll}
+            disabled={loading || parcels.length === 0}
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-blue-600 transition"
+          >
+            {selectedIds.size === parcels.length && parcels.length > 0 ? (
+              <>
+                <CheckSquare className="w-4 h-4 text-blue-600" /> Deselect All
+              </>
+            ) : (
+              <>
+                <Square className="w-4 h-4 text-slate-400" /> Select All ({parcels.length})
+              </>
+            )}
+          </button>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
-          <div className="flex items-center gap-3 pb-6 border-b border-slate-100">
-            <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center">
-              <PackagePlus className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-slate-900">Create New Delivery Order</h1>
-              <p className="text-xs text-slate-500">Generate waybill with Lebanese regional routing & COD</p>
-            </div>
-          </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={fetchParcels}
+            disabled={loading}
+            className="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg flex items-center gap-1.5 transition"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
+          </button>
 
-          {error && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg">
-              {error}
-            </div>
-          )}
+          <button
+            onClick={printSelected}
+            disabled={loading || selectedIds.size === 0}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold flex items-center gap-2 shadow-sm transition disabled:opacity-50"
+          >
+            <Printer className="w-4 h-4" />
+            Print Selected ({selectedIds.size})
+          </button>
+        </div>
+      </div>
 
-          <form onSubmit={handleSubmit} className="mt-6 space-y-6">
-            {/* Recipient Details */}
-            <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5" /> Recipient Information
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Customer Full Name *</label>
+      {/* Loading & Error States */}
+      {loading && (
+        <div className="max-w-4xl mx-auto p-12 text-center bg-white rounded-xl border border-slate-200 print:hidden">
+          <Loader2 className="w-8 h-8 text-blue-600 animate-spin mx-auto mb-3" />
+          <p className="text-slate-600 font-medium text-sm">Loading waybills...</p>
+        </div>
+      )}
+
+      {error && !loading && (
+        <div className="max-w-4xl mx-auto p-6 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 flex items-center gap-3 print:hidden">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <p className="text-sm font-semibold">{error}</p>
+        </div>
+      )}
+
+      {!loading && !error && parcels.length === 0 && (
+        <div className="max-w-4xl mx-auto p-12 text-center bg-white rounded-xl border border-slate-200 print:hidden">
+          <p className="text-slate-600 font-semibold">No active parcels found for batch printing.</p>
+          <p className="text-xs text-slate-400 mt-1">Parcels must be in active dispatch or pickup statuses.</p>
+        </div>
+      )}
+
+      {/* Printable Waybills Stream */}
+      <div className="max-w-4xl mx-auto space-y-8 print:space-y-0 print:m-0 print:max-w-none">
+        {parcels.map((parcel, idx) => {
+          const isSelected = selectedIds.has(parcel.id);
+          const codFormatted =
+            parcel.codCurrency === "USD"
+              ? `$${Number(parcel.codAmount).toFixed(2)} USD`
+              : `${Number(parcel.codAmount).toLocaleString()} LBP`;
+
+          return (
+            <div
+              key={parcel.id || idx}
+              className={`bg-white border-2 rounded-xl p-6 shadow-sm transition ${
+                isSelected
+                  ? "border-slate-800 print:block"
+                  : "border-slate-200 opacity-60 print:hidden"
+              } print:shadow-none print:border-2 print:border-black print:rounded-none print:p-6 print:m-0 print:break-after-page`}
+            >
+              {/* Card Selection Header (Hidden on print) */}
+              <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 print:hidden">
+                <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-700">
                   <input
-                    type="text"
-                    required
-                    placeholder="e.g. Maya El Hajj"
-                    value={recipientName}
-                    onChange={(e) => setRecipientName(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => toggleSelect(parcel.id)}
+                    className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
                   />
-                </div>
+                  <span>Include in Print Run</span>
+                </label>
+
+                <button
+                  type="button"
+                  onClick={() => printSingle(parcel.id)}
+                  className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-semibold flex items-center gap-1.5 transition"
+                >
+                  <Printer className="w-3 h-3" /> Print This Label Only
+                </button>
+              </div>
+
+              {/* Waybill Official Header */}
+              <div className="flex justify-between items-start border-b-2 border-slate-900 pb-3 mb-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Phone Number *</label>
-                  <div className="relative">
-                    <Phone className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
-                    <input
-                      type="tel"
-                      required
-                      placeholder="+961 70 123 456"
-                      value={recipientPhone}
-                      onChange={(e) => setRecipientPhone(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                  <h1 className="text-2xl font-black tracking-tight text-slate-900 leading-none">
+                    CEDEX LOGISTICS
+                  </h1>
+                  <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mt-1">
+                    Express Dispatch & COD Services | Lebanon: +961 3 448 482
+                  </p>
+                </div>
+                <div className="text-right">
+                  <span className="inline-block px-2.5 py-0.5 bg-slate-900 text-white font-mono text-[11px] font-bold rounded">
+                    WAYBILL
+                  </span>
+                  <p className="text-[10px] font-mono text-slate-500 mt-1">
+                    {new Date(parcel.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+
+              {/* Barcode Strip */}
+              <div className="flex flex-col items-center justify-center p-3 bg-slate-50 border border-slate-200 rounded-lg mb-4 print:bg-transparent print:border-slate-300">
+                <Barcode value={parcel.trackingNumber} />
+                <p className="font-mono text-base font-bold tracking-widest text-slate-900 mt-1">
+                  {parcel.trackingNumber}
+                </p>
+              </div>
+
+              {/* Sender & Destination Grid */}
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div className="border border-slate-200 p-3 rounded-lg print:border-slate-400 overflow-hidden min-w-0">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                    SENDER / MERCHANT
+                  </p>
+                  <p className="text-sm font-bold text-slate-900 truncate">{parcel.merchant.companyName}</p>
+                  <p className="text-xs font-medium text-slate-700 mt-0.5 truncate">
+                    📍 {parcel.merchant.pickupCity || "Lebanon Hub"}
+                  </p>
+                  {parcel.merchant.pickupAddress && (
+                    <p className="text-[11px] text-slate-500 break-words leading-tight mt-1 line-clamp-2">
+                      {parcel.merchant.pickupAddress}
+                    </p>
+                  )}
+                  <p className="text-xs font-mono text-slate-600 mt-1 font-semibold">
+                    📞 {parcel.merchant.user?.phone || "+961 3 448 482"}
+                  </p>
+                </div>
+
+                <div className="border-2 border-slate-900 p-3 rounded-lg bg-slate-50/50 print:bg-transparent print:border-black overflow-hidden min-w-0 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                        RECIPIENT / DESTINATION
+                      </p>
+                      <span className="text-[10px] font-bold font-mono px-1.5 py-0.5 bg-slate-200 print:bg-slate-100 rounded text-slate-900 uppercase">
+                        {parcel.city}
+                      </span>
+                    </div>
+                    <p className="text-sm font-black text-slate-900 leading-snug break-words">
+                      {parcel.recipientName}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2 mt-1">
+                      <span className="text-xs font-bold font-mono text-slate-900">
+                        📞 {parcel.recipientPhone}
+                      </span>
+                      {parcel.recipientAltPhone && (
+                        <span className="text-[11px] font-mono text-slate-600">
+                          / {parcel.recipientAltPhone}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="mt-2 pt-2 border-t border-slate-200 print:border-slate-300">
+                    <p className="text-[11px] text-slate-800 font-medium leading-snug break-words">
+                      {parcel.detailedAddress || "Standard Delivery"}
+                    </p>
+                    <p className="text-[10px] font-extrabold text-slate-900 uppercase mt-1 tracking-wide">
+                      {parcel.city} • {parcel.governorate}
+                    </p>
                   </div>
                 </div>
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Secondary / WhatsApp Phone (Optional)</label>
-                  <input
-                    type="tel"
-                    placeholder="+961 03 987 654"
-                    value={recipientAltPhone}
-                    onChange={(e) => setRecipientAltPhone(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+              </div>
+
+              {/* COD Strip */}
+              <div className="border-2 border-slate-900 rounded-xl p-3.5 bg-amber-50/50 flex items-center justify-between mb-3 print:bg-transparent print:border-black">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-wider text-amber-900">
+                    CASH ON DELIVERY (COD)
+                  </p>
+                  <p className="text-xs text-slate-600 font-medium">Collect cash upon handover</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-black text-slate-900">{codFormatted}</p>
                 </div>
               </div>
-            </div>
 
-            {/* Destination Address */}
-            <div className="pt-4 border-t border-slate-100">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5" /> Destination Details
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Governorate *</label>
-                  <select
-                    value={governorate}
-                    onChange={(e) => handleGovernorateChange(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    {Object.keys(LEBANON_REGIONS).map((gov) => (
-                      <option key={gov} value={gov}>{gov}</option>
-                    ))}
-                  </select>
+              {parcel.notes && (
+                <div className="border border-amber-200 bg-amber-50 p-2.5 rounded-lg mb-3 print:border-slate-300 print:bg-transparent">
+                  <p className="text-[10px] font-bold text-amber-900 uppercase tracking-wider">
+                    Driver Notes
+                  </p>
+                  <p className="text-xs text-amber-950 font-medium mt-0.5">{parcel.notes}</p>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">City / District *</label>
-                  <select
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    {LEBANON_REGIONS[governorate]?.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Street, Building, Floor *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Bliss Street, Al Noor Bldg, 3rd Floor"
-                    value={detailedAddress}
-                    onChange={(e) => setDetailedAddress(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Prominent Landmark (Optional)</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Next to AUB Main Gate, facing pharmacy"
-                    value={landmark}
-                    onChange={(e) => setLandmark(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Cash on Delivery (COD) & Rates */}
-            <div className="pt-4 border-t border-slate-100">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
-                <DollarSign className="w-3.5 h-3.5" /> Cash On Delivery (COD) & Fees
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">COD Amount *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    required
-                    value={codAmount}
-                    onChange={(e) => setCodAmount(parseFloat(e.target.value) || 0)}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Currency *</label>
-                  <select
-                    value={codCurrency}
-                    onChange={(e) => setCodCurrency(e.target.value as "USD" | "LBP")}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
-                  >
-                    <option value="USD">USD ($)</option>
-                    <option value="LBP">LBP (Lebanese Pound)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Delivery Fee (USD) *</label>
-                  <input
-                    type="number"
-                    step="0.5"
-                    min="0"
-                    required
-                    value={deliveryFee}
-                    onChange={(e) => setDeliveryFee(parseFloat(e.target.value) || 0)}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Special Instructions */}
-            <div className="pt-4 border-t border-slate-100">
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Delivery Notes / Package Contents</label>
-              <textarea
-                rows={2}
-                placeholder="e.g. Fragile glass bottles. Call before arriving."
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl flex items-center justify-center gap-2 shadow-sm transition disabled:opacity-50"
-            >
-              {submitting ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <>
-                  <PackagePlus className="w-5 h-5" />
-                  <span>Register Parcel & Generate Tracking Code</span>
-                </>
               )}
-            </button>
-          </form>
-        </div>
+
+              {/* Footer */}
+              <div className="text-center pt-2 border-t border-slate-200 flex justify-between items-center text-[10px] text-slate-500">
+                <span>Cedex Logistics Express Network</span>
+                <span>Track: cedex.express/track/{parcel.trackingNumber}</span>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
