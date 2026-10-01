@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { WhatsAppReceiptButton } from "@/components/WhatsAppReceiptButton";
 import { useState, useEffect } from "react";
@@ -33,8 +33,53 @@ export default function NewParcelPage() {
   const [landmark, setLandmark] = useState("");
   const [codAmount, setCodAmount] = useState<number>(25);
   const [codCurrency, setCodCurrency] = useState<"USD" | "LBP">("USD");
-  const [deliveryFee, setDeliveryFee] = useState<number>(3.5);
+  const [deliveryFee, setDeliveryFee] = useState<number>(3.0);
+  const [weightKg, setWeightKg] = useState<number>(1);
+  const [isSameDay, setIsSameDay] = useState<boolean>(false);
+  const [isExchange, setIsExchange] = useState<boolean>(false);
+  const [feeBreakdown, setFeeBreakdown] = useState<string>("Beirut standard rate: $3.00");
   const [notes, setNotes] = useState("");
+
+  // Dynamic Lebanese Courier Fee Calculation
+  function calcLebanonFee(gov: string, weight: number, sameDay: boolean, exchange: boolean) {
+    let base = 3.5;
+    const g = gov.toLowerCase();
+
+    if (g.includes("akkar") || g.includes("hermel") || g.includes("baalbek")) {
+      base = 5.0; // Out-of-zone / remote
+    } else if (g.includes("nabatieh")) {
+      base = 4.5;
+    } else if (g.includes("south")) {
+      base = 4.0;
+    } else if (g.includes("beirut")) {
+      base = 3.0; // Beirut city
+    } else if (g.includes("mount")) {
+      base = 3.5; // Mount Lebanon
+    } else if (g.includes("north")) {
+      base = 4.0;
+    } else {
+      base = 4.0;
+    }
+
+    let extraWeight = 0;
+    if (weight > 3) {
+      extraWeight = Math.ceil(weight - 3) * 0.5;
+    }
+
+    const rushExtra = sameDay ? 2.0 : 0;
+    const exchangeExtra = exchange ? 1.5 : 0;
+    const total = Number((base + extraWeight + rushExtra + exchangeExtra).toFixed(2));
+
+    const parts = [
+      `Base: $${base.toFixed(2)}`,
+      extraWeight > 0 ? `+${weight - 3}kg ($${extraWeight.toFixed(2)})` : null,
+      rushExtra > 0 ? "Same-Day (+$2.00)" : null,
+      exchangeExtra > 0 ? "Exchange (+$1.50)" : null,
+    ].filter(Boolean).join(" • ");
+
+    setDeliveryFee(total);
+    setFeeBreakdown(parts);
+  }
 
   useEffect(() => {
     async function fetchUser() {
@@ -59,6 +104,7 @@ export default function NewParcelPage() {
   const handleGovernorateChange = (gov: string) => {
     setGovernorate(gov);
     setCity(LEBANON_REGIONS[gov]?.[0] || "");
+    calcLebanonFee(gov, weightKg, isSameDay, isExchange);
   };
 
   async function handleSubmit(e: React.FormEvent) {
@@ -302,10 +348,15 @@ export default function NewParcelPage() {
 
             {/* Cash on Delivery (COD) & Rates */}
             <div className="pt-4 border-t border-slate-100">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
-                <DollarSign className="w-3.5 h-3.5" /> Cash On Delivery (COD) & Fees
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <DollarSign className="w-3.5 h-3.5" /> Cash On Delivery (COD) & Delivery Tariff
+                </h3>
+                <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
+                  Lebanese Courier Matrix
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">COD Amount *</label>
                   <input
@@ -330,15 +381,76 @@ export default function NewParcelPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Delivery Fee (USD) *</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold text-slate-700">Delivery Fee (USD) *</label>
+                    <span className="text-[10px] text-slate-400">Auto-calculated</span>
+                  </div>
                   <input
                     type="number"
-                    step="0.5"
+                    step="0.25"
                     min="0"
                     required
                     value={deliveryFee}
                     onChange={(e) => setDeliveryFee(parseFloat(e.target.value) || 0)}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-blue-600"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1 truncate" title={feeBreakdown}>
+                    {feeBreakdown}
+                  </p>
+                </div>
+              </div>
+
+              {/* Lebanese Courier Tariff Modifiers */}
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">Package Weight (KG)</label>
+                  <input
+                    type="number"
+                    min="0.5"
+                    step="0.5"
+                    value={weightKg}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value) || 1;
+                      setWeightKg(val);
+                      calcLebanonFee(governorate, val, isSameDay, isExchange);
+                    }}
+                    className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg bg-white"
+                    placeholder="1-3 kg standard"
+                  />
+                  <span className="text-[9px] text-slate-400">Over 3kg: +$0.50/kg</span>
+                </div>
+
+                <div className="flex items-center justify-between p-2.5 bg-white rounded-lg border border-slate-200">
+                  <div>
+                    <span className="text-xs font-semibold text-slate-800 block">Same-Day Rush</span>
+                    <span className="text-[10px] text-slate-400">Express delivery (+$2.00)</span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={isSameDay}
+                    onChange={(e) => {
+                      const val = e.target.checked;
+                      setIsSameDay(val);
+                      calcLebanonFee(governorate, weightKg, val, isExchange);
+                    }}
+                    className="w-4 h-4 rounded text-blue-600 cursor-pointer"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-2.5 bg-white rounded-lg border border-slate-200">
+                  <div>
+                    <span className="text-xs font-semibold text-slate-800 block">Exchange Order (بدل)</span>
+                    <span className="text-[10px] text-slate-400">Pick up return item (+$1.50)</span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={isExchange}
+                    onChange={(e) => {
+                      const val = e.target.checked;
+                      setIsExchange(val);
+                      calcLebanonFee(governorate, weightKg, isSameDay, val);
+                    }}
+                    className="w-4 h-4 rounded text-blue-600 cursor-pointer"
                   />
                 </div>
               </div>
