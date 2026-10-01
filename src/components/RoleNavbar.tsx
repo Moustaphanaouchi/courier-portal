@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useState } from "react";
+import { LanguageToggle } from "@/components/LanguageToggle";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -201,7 +202,8 @@ export default function RoleNavbar() {
         </div>
 
         {/* User Identity & Logout Controls */}
-        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <LanguageToggle />
           {loading ? (
             <div className="w-16 sm:w-20 h-7 bg-slate-800 animate-pulse rounded-lg" />
           ) : user ? (

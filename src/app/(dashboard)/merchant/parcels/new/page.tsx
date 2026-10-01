@@ -3,7 +3,7 @@
 import { WhatsAppReceiptButton } from "@/components/WhatsAppReceiptButton";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { PackagePlus, CheckCircle2, ArrowLeft, Loader2, DollarSign, MapPin, Phone, User } from "lucide-react";
+import { PackagePlus, CheckCircle2, ArrowLeft, Loader2, DollarSign, MapPin, Phone, User, Lock } from "lucide-react";
 import Link from "next/link";
 
 const LEBANON_REGIONS: Record<string, string[]> = {
@@ -34,15 +34,13 @@ export default function NewParcelPage() {
   const [codAmount, setCodAmount] = useState<number>(25);
   const [codCurrency, setCodCurrency] = useState<"USD" | "LBP">("USD");
   const [deliveryFee, setDeliveryFee] = useState<number>(3.0);
-  const [autoCalculatedFee, setAutoCalculatedFee] = useState<number>(3.0);
-  const [isCustomFee, setIsCustomFee] = useState<boolean>(false);
   const [weightKg, setWeightKg] = useState<number>(1);
   const [isSameDay, setIsSameDay] = useState<boolean>(false);
   const [isExchange, setIsExchange] = useState<boolean>(false);
-  const [feeBreakdown, setFeeBreakdown] = useState<string>("Beirut standard rate: $3.00");
+  const [feeBreakdown, setFeeBreakdown] = useState<string>("Base Beirut rate: $3.00");
   const [notes, setNotes] = useState("");
 
-  // Dynamic Lebanese Courier Fee Calculation
+  // Automated Lebanese Logistics Tariff Engine
   function calcLebanonFee(gov: string, weight: number, sameDay: boolean, exchange: boolean) {
     let base = 3.5;
     const g = gov.toLowerCase();
@@ -54,9 +52,9 @@ export default function NewParcelPage() {
     } else if (g.includes("south")) {
       base = 4.0;
     } else if (g.includes("beirut")) {
-      base = 3.0; // Beirut city
+      base = 3.0; // Beirut city standard
     } else if (g.includes("mount")) {
-      base = 3.5; // Mount Lebanon
+      base = 3.5; // Mount Lebanon / Metn / Keserwan
     } else if (g.includes("north")) {
       base = 4.0;
     } else {
@@ -79,18 +77,15 @@ export default function NewParcelPage() {
       exchangeExtra > 0 ? "Exchange (+$1.50)" : null,
     ].filter(Boolean).join(" • ");
 
-    setAutoCalculatedFee(total);
+    setDeliveryFee(total);
     setFeeBreakdown(parts);
-    if (!isCustomFee) {
-      setDeliveryFee(total);
-    }
   }
 
-  // Force re-sync back to auto-calculated tariff
-  function resetToAutoFee() {
-    setDeliveryFee(autoCalculatedFee);
-    setIsCustomFee(false);
-  }
+  const handleGovernorateChange = (gov: string) => {
+    setGovernorate(gov);
+    setCity(LEBANON_REGIONS[gov]?.[0] || "");
+    calcLebanonFee(gov, weightKg, isSameDay, isExchange);
+  };
 
   useEffect(() => {
     async function fetchUser() {
@@ -111,19 +106,12 @@ export default function NewParcelPage() {
     fetchUser();
   }, [router]);
 
-  // Adjust city options when governorate changes
-  const handleGovernorateChange = (gov: string) => {
-    setGovernorate(gov);
-    setCity(LEBANON_REGIONS[gov]?.[0] || "");
-    calcLebanonFee(gov, weightKg, isSameDay, isExchange);
-  };
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!merchantId) return;
 
-    setError(null);
     setSubmitting(true);
+    setError(null);
 
     try {
       const res = await fetch("/api/parcels", {
@@ -133,26 +121,30 @@ export default function NewParcelPage() {
           merchantId,
           recipientName,
           recipientPhone,
-          recipientAltPhone: recipientAltPhone || undefined,
-          governorate,
-          city,
-          detailedAddress,
-          landmark: landmark || undefined,
-          codAmount: Number(codAmount),
+          recipientAltPhone: recipientAltPhone || null,
+          city: `${governorate} - ${city}`,
+          address: detailedAddress + (landmark ? ` (Landmark: ${landmark})` : ""),
+          codAmount,
           codCurrency,
-          deliveryFee: Number(deliveryFee),
-          notes: notes || undefined,
+          deliveryFee,
+          notes: [
+            notes,
+            weightKg > 3 ? `Weight: ${weightKg}kg` : null,
+            isSameDay ? "Rush: Same-Day" : null,
+            isExchange ? "Exchange Item (طلب بدل)" : null,
+          ].filter(Boolean).join(" | "),
         }),
       });
 
       const data = await res.json();
+
       if (!res.ok) {
-        throw new Error(typeof data.error === "string" ? data.error : "Failed to create parcel");
+        throw new Error(data.error || "Failed to create parcel order.");
       }
 
-      setSuccessCode(data.parcel.trackingNumber);
+      setSuccessCode(data.trackingNumber);
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || "An unexpected error occurred.");
     } finally {
       setSubmitting(false);
     }
@@ -169,54 +161,55 @@ export default function NewParcelPage() {
   if (successCode) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-        <div className="max-w-md w-full bg-white p-8 rounded-2xl border border-slate-200 text-center shadow-sm">
+        <div className="max-w-md w-full bg-white p-8 rounded-2xl border border-slate-200 text-center shadow-xs">
           <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-slate-900">Parcel Registered!</h2>
           <p className="text-sm text-slate-500 mt-1">Ready for pickup at your registered store address.</p>
 
-          <div className="mt-6 p-4 bg-slate-50 rounded-xl border border-slate-200 font-mono text-lg font-bold text-blue-600">
+          <div className="mt-6 p-4 bg-slate-50 rounded-xl border border-slate-200 font-mono text-lg font-bold text-blue-600 tracking-wider">
             {successCode}
           </div>
 
           <div className="mt-6 flex flex-col gap-2.5">
-              
-              {/* Direct Printable Waybill Link */}
-              <a
-                href={`/parcels/${successCode}/label`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-2.5 bg-slate-900 hover:bg-black text-white rounded-xl font-semibold text-sm transition flex items-center justify-center gap-2 shadow-sm"
-              >
-                <span>🖨️ Print Waybill / Thermal Label</span>
-              </a>
+            <a
+              href={`/parcels/${successCode}/label`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full py-2.5 bg-slate-900 hover:bg-black text-white rounded-xl font-semibold text-sm transition flex items-center justify-center gap-2"
+            >
+              <span>🖨️ Print Waybill / Thermal Label</span>
+            </a>
 
-{/* WhatsApp Verification Actions */}
-              <div className="flex flex-col gap-2 mb-2">
-                <WhatsAppReceiptButton
-                  phone={recipientPhone}
-                  parcel={{
-                    trackingNumber: successCode,
-                    recipientName,
-                    recipientPhone,
-                    city,
-                    codAmount,
-                    codCurrency,
-                    notes: (typeof notes !== "undefined" ? notes : "") || undefined,
-                  }}
-                  label="Send Receipt to Customer via WhatsApp"
-                />
-              </div>
+            <div className="flex flex-col gap-2 mb-2">
+              <WhatsAppReceiptButton
+                phone={recipientPhone}
+                parcel={{
+                  trackingNumber: successCode,
+                  recipientName,
+                  recipientPhone,
+                  city,
+                  codAmount,
+                  codCurrency,
+                  notes: notes || undefined,
+                }}
+                label="Send Receipt to Customer via WhatsApp"
+              />
+            </div>
+
             <button
               onClick={() => {
                 setSuccessCode(null);
                 setRecipientName("");
                 setRecipientPhone("");
                 setDetailedAddress("");
+                setLandmark("");
+                setNotes("");
               }}
               className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm transition"
             >
               Add Another Parcel
             </button>
+
             <Link
               href="/"
               className="w-full py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg font-semibold text-sm transition text-center"
@@ -241,7 +234,7 @@ export default function NewParcelPage() {
           </span>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 sm:p-8">
           <div className="flex items-center gap-3 pb-6 border-b border-slate-100">
             <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center">
               <PackagePlus className="w-5 h-5" />
@@ -393,19 +386,24 @@ export default function NewParcelPage() {
                 </div>
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs font-semibold text-slate-700">Delivery Fee (USD) *</label>
-                    <span className="text-[10px] text-slate-400">Auto-calculated</span>
+                    <label className="block text-xs font-semibold text-slate-700">Delivery Fee (USD)</label>
+                    <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 inline-flex items-center gap-1">
+                      <Lock className="w-2.5 h-2.5" /> Fixed Tariff
+                    </span>
                   </div>
-                  <input
-                    type="number"
-                    step="0.25"
-                    min="0"
-                    required
-                    value={deliveryFee}
-                    onChange={(e) => setDeliveryFee(parseFloat(e.target.value) || 0)}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-blue-600"
-                  />
-                  <p className="text-[10px] text-slate-400 mt-1 truncate" title={feeBreakdown}>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      readOnly
+                      disabled
+                      value={deliveryFee}
+                      className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg font-bold text-slate-700 bg-slate-100 cursor-not-allowed select-none"
+                    />
+                    <span className="absolute right-3 top-2.5 text-xs text-slate-400 font-semibold pointer-events-none">
+                      USD
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1 truncate" title={feeBreakdown}>
                     {feeBreakdown}
                   </p>
                 </div>
@@ -482,7 +480,7 @@ export default function NewParcelPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl flex items-center justify-center gap-2 shadow-sm transition disabled:opacity-50"
+              className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition disabled:opacity-50"
             >
               {submitting ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -499,4 +497,3 @@ export default function NewParcelPage() {
     </div>
   );
 }
-
