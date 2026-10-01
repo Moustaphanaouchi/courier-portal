@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -11,6 +11,7 @@ export async function GET() {
           where: {
             status: "DELIVERED",
             isCodCollected: true,
+            settlementId: null, // Only parcels pending cash handover
           },
           select: {
             id: true,
@@ -46,22 +47,36 @@ export async function POST(req: Request) {
     }
 
     const settlement = await prisma.$transaction(async (tx) => {
+      // 1. Create settlement ledger entry
       const created = await tx.driverSettlement.create({
         data: {
           driverId,
-          totalCollectedUsd: totalUsd || 0,
-          totalCollectedLbp: totalLbp || 0,
+          totalCollectedUsd: Number(totalUsd) || 0,
+          totalCollectedLbp: Number(totalLbp) || 0,
           cashHandedOver: true,
           verifiedByAdmin: true,
           adminNote: adminNote || "Cash verified and deposited at hub counter",
         },
       });
 
+      // 2. Link all parcels to this settlement so they are cleared from the pending list
+      if (Array.isArray(parcelIds) && parcelIds.length > 0) {
+        await tx.parcel.updateMany({
+          where: {
+            id: { in: parcelIds },
+          },
+          data: {
+            settlementId: created.id,
+          },
+        });
+      }
+
       return created;
     });
 
     return NextResponse.json({ success: true, settlement });
   } catch (error: any) {
+    console.error("Settlement POST error:", error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
