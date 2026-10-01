@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -139,28 +139,30 @@ export default function DispatchBoardPage() {
         )}
 
         {/* Dispatch Controls Bar */}
-        <div className="mt-6 bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <label className="text-xs font-semibold text-slate-600">Filter Governorate:</label>
+        <div className="mt-6 bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          {/* Filter section */}
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <label className="text-xs font-semibold text-slate-600">Governorate:</label>
             <select
               value={filterGov}
               onChange={(e) => setFilterGov(e.target.value)}
-              className="text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 bg-slate-50"
+              className="text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 bg-slate-50 font-medium"
             >
               {governorates.map((gov) => (
                 <option key={gov} value={gov}>{gov}</option>
               ))}
             </select>
-            <span className="text-xs text-slate-400">
-              Showing {filteredParcels.length} pending
+            <span className="text-xs text-slate-400 font-medium">
+              ({filteredParcels.length} pending)
             </span>
           </div>
 
-          <div className="flex items-center gap-3"><Link href="/admin/parcels/print-batch" className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition"><Printer className="w-3.5 h-3.5" /><span>Batch Print Labels</span></Link>
+          {/* Action & Assignment Controls */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 w-full lg:w-auto">
             <select
               value={selectedDriverId}
               onChange={(e) => setSelectedDriverId(e.target.value)}
-              className="text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white font-medium"
+              className="text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white font-medium w-full sm:w-auto"
             >
               {drivers.map((d) => (
                 <option key={d.id} value={d.id}>
@@ -169,26 +171,28 @@ export default function DispatchBoardPage() {
               ))}
             </select>
 
-            <button
-              onClick={handleAssign}
-              disabled={selectedIds.length === 0 || assigning}
-              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold flex items-center gap-2 transition disabled:opacity-40"
-            >
-              <Truck className="w-4 h-4" />
-              <span>Assign {selectedIds.length > 0 ? `(${selectedIds.length})` : ""}</span>
-            </button>
-
-            {selectedDriverId && (
-              <Link
-                href={`/admin/manifest/${selectedDriverId}`}
-                target="_blank"
-                className="px-3 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs transition"
-                title="View printable route run-sheet and export CSV for selected driver"
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <button
+                onClick={handleAssign}
+                disabled={selectedIds.length === 0 || assigning}
+                className="flex-1 sm:flex-none justify-center px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold flex items-center gap-2 transition disabled:opacity-40"
               >
-                <FileText className="w-3.5 h-3.5 text-blue-600" />
-                <span>Run-Sheet Manifest</span>
-              </Link>
-            )}
+                <Truck className="w-4 h-4" />
+                <span>Assign {selectedIds.length > 0 ? `(${selectedIds.length})` : ""}</span>
+              </button>
+
+              {selectedDriverId && (
+                <Link
+                  href={`/admin/manifest/${selectedDriverId}`}
+                  target="_blank"
+                  className="flex-1 sm:flex-none justify-center px-3 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs transition"
+                  title="View printable route run-sheet"
+                >
+                  <FileText className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Run-Sheet</span>
+                </Link>
+              )}
+            </div>
           </div>
         </div>
 
