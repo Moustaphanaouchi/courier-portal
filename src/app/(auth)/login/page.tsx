@@ -1,11 +1,13 @@
-"use client";
+﻿"use client";
 
+import { useLanguage } from "@/context/LanguageContext";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Package, Lock, Mail, ArrowRight, Loader2 } from "lucide-react";
 
 export default function LoginPage() {
+  const { t, isRtl } = useLanguage();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -64,7 +66,7 @@ export default function LoginPage() {
             Cedex Logistics
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            Dispatch, Parcels, and Multi-Currency COD Engine
+            {t("loginSubtitle")}
           </p>
         </div>
 
@@ -86,7 +88,7 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@company.com"
+                placeholder={t("emailPlaceholder")}
                 className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
               />
             </div>
@@ -103,7 +105,7 @@ export default function LoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder={t("passwordPlaceholder")}
                 className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
               />
             </div>
@@ -118,7 +120,7 @@ export default function LoginPage() {
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <>
-                <span>Sign In</span>
+                <span>{t("signIn")}</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
@@ -128,7 +130,7 @@ export default function LoginPage() {
         {/* Quick-fill demo credentials */}
         <div className="border-t border-slate-100 pt-4">
           <p className="text-[11px] font-medium text-slate-400 mb-2 text-center uppercase tracking-wider">
-            Quick Fill Demo Accounts (Password123!)
+            {t("quickFillDemo")} (Password123!)
           </p>
           <div className="grid grid-cols-3 gap-2 text-xs">
             <button
@@ -158,9 +160,9 @@ export default function LoginPage() {
         {/* Merchant Onboarding Link */}
         <div className="border-t border-slate-100 pt-4 text-center">
           <p className="text-xs text-slate-500">
-            Running an e-commerce business?{" "}
+            {t("registerMerchantPrompt")}{" "}
             <Link href="/register" className="font-bold text-blue-600 hover:text-blue-700 hover:underline">
-              Register as Merchant
+              {t("registerAsMerchant")}
             </Link>
           </p>
         </div>

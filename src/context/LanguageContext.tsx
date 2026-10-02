@@ -37,11 +37,25 @@ export const translations = {
     activeRunSheet: "Active Run-Sheet",
     tripHistory: "Trip History",
 
+    // Auth & Login
+    loginSubtitle: "Dispatch, Parcels, and Multi-Currency COD Engine",
+    emailAddress: "Email Address",
+    emailPlaceholder: "name@company.com",
+    password: "Password",
+    passwordPlaceholder: "••••••••",
+    signingIn: "Signing in...",
+    quickFillDemo: "Quick Fill Demo Accounts",
+    registerMerchantPrompt: "Running an e-commerce business?",
+    registerAsMerchant: "Register as Merchant",
+    loginErrorDefault: "Invalid credentials or login failed",
+
     // Homepage Landing & Portals
     homeBadge: "PUBLIC LOGISTICS PLATFORM",
     homeHeroTitle: "Lebanese Regional Courier Engine",
     homeHeroSubtitle: "Multi-currency USD & LBP cash-on-delivery tracking, hub dispatching, and automated settlements.",
     trackBtn: "Track",
+    trackInputPlaceholder: "Enter 10-digit tracking code (e.g. CDX-882194)...",
+
     signIn: "Sign In",
 
     // Hub Dispatch Board Card
@@ -219,11 +233,25 @@ export const translations = {
     activeRunSheet: "قائمة التوصيل الحالية",
     tripHistory: "سجل الرحلات المكتملة",
 
+    // Auth & Login
+    loginSubtitle: "محرك إدارة الطرود، التوزيع، والتحصيل متعدد العملات (COD)",
+    emailAddress: "البريد الإلكتروني",
+    emailPlaceholder: "name@company.com",
+    password: "كلمة المرور",
+    passwordPlaceholder: "••••••••",
+    signingIn: "جارٍ تسجيل الدخول...",
+    quickFillDemo: "تعبئة سريعة لحسابات تجريبية",
+    registerMerchantPrompt: "تدير متجراً إلكترونياً وترغب بالشحن معنا؟",
+    registerAsMerchant: "سجّل كتاجر جديد",
+    loginErrorDefault: "بيانات الدخول غير صحيحة أو فشل الاتصال",
+
     // Homepage Landing & Portals
     homeBadge: "منصة الخدمات اللوجستية العامة",
     homeHeroTitle: "محرك التوصيل للمحافظات اللبنانية",
     homeHeroSubtitle: "تتبع مبالغ الدفع عند الاستلام بالدولار والليرة اللبنانية، إدارة توزيع الشحنات، والتسويات المالية الفورية.",
     trackBtn: "تتبع شحنتك",
+    trackInputPlaceholder: "أدخل كود التتبع المؤلف من 10 خانات (مثال: CDX-882194)...",
+
     signIn: "تسجيل الدخول",
 
     // Hub Dispatch Board Card
