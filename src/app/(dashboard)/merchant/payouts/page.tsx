@@ -1,5 +1,6 @@
-"use client";
+﻿"use client";
 
+import { useLanguage } from "@/context/LanguageContext";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { 
@@ -48,6 +49,7 @@ interface PayoutSummary {
 }
 
 export default function MerchantPayoutsPage() {
+  const { t, isRtl } = useLanguage();
   const [summary, setSummary] = useState<PayoutSummary | null>(null);
   const [parcels, setParcels] = useState<ParcelItem[]>([]);
   const [payouts, setPayouts] = useState<PayoutRecord[]>([]);
@@ -195,7 +197,7 @@ export default function MerchantPayoutsPage() {
                     <th className="p-3">Recipient / City</th>
                     <th className="p-3">Gross COD</th>
                     <th className="p-3">Courier Fee</th>
-                    <th className="p-3 text-right">Payout Status</th>
+                    <th className="p-3 text-right">Payout {t("payoutStatus")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
