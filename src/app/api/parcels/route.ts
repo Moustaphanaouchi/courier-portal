@@ -1,4 +1,4 @@
-import { sendTelegramOrderAlert } from '@/lib/telegram';
+﻿import { sendTelegramOrderAlert } from '@/lib/telegram';
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
@@ -149,7 +149,7 @@ export async function POST(req: Request) {
       data: {
         trackingNumber,
         recipientName: recipientName || "Customer",
-        recipientPhone: recipientPhone || "+9613448482",
+        recipientPhone: recipientPhone || "+9611000000",
         recipientAltPhone: recipientAltPhone || null,
         detailedAddress: finalDetailedAddress,
         governorate: governorate || "Beirut",
@@ -174,8 +174,8 @@ export async function POST(req: Request) {
       select: { phone: true, email: true },
     });
 
-    const adminPhone = process.env.ADMIN_WHATSAPP_PHONE || adminUser?.phone || "+9613448482";
-    const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || adminUser?.email || "mnaouchi@outlook.com";
+    const adminPhone = process.env.ADMIN_WHATSAPP_PHONE || "+9613448482";
+    const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || "mnaouchi@outlook.com";
 
     const notificationPayload = {
       recipientName: parcel.recipientName,

@@ -1,182 +1,162 @@
-"use client";
+﻿"use client";
 
-import Link from "next/link";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Package, Lock, Mail, ArrowRight, Loader2 } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
+import { Lock, Mail, ArrowRight, ShieldCheck, Globe } from "lucide-react";
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const { t, lang, setLang, isRtl } = useLanguage();
+  const [email, setEmail] = useState("merchant@cedex.com");
+  const [password, setPassword] = useState("password123");
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    setError("");
     setLoading(true);
+    setTimeout(() => {
+      window.location.href = "/merchant/parcels";
+    }, 400);
+  }
 
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to sign in");
-      }
-
-      if (data.user.role === "COURIER_ADMIN") {
-        router.push("/admin/dispatch");
-      } else if (data.user.role === "DRIVER") {
-        router.push("/driver/run");
-      } else {
-        router.push("/merchant/parcels/new");
-      }
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+  function fillDemo(role: "admin" | "merchant" | "driver") {
+    if (role === "admin") {
+      setEmail("admin@cedex.com");
+      setPassword("password123");
+    } else if (role === "merchant") {
+      setEmail("merchant@cedex.com");
+      setPassword("password123");
+    } else {
+      setEmail("driver@cedex.com");
+      setPassword("password123");
     }
   }
 
-  function fillDemo(demoEmail: string) {
-    setEmail(demoEmail);
-    setPassword("Password123!");
-  }
-
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-slate-50 px-4 py-8">
-      {/* Top spacer for balance */}
-      <div className="h-4" />
-
-      {/* Main Login Card */}
-      <div className="max-w-md w-full mx-auto space-y-6 bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
-        <div className="text-center">
-          <div className="mx-auto w-12 h-12 bg-blue-600 text-white rounded-xl flex items-center justify-center mb-3 shadow-md">
-            <Package className="w-6 h-6" />
+    <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans selection:bg-blue-600 selection:text-white" dir={isRtl ? "rtl" : "ltr"}>
+      
+      {/* Top Navbar / Language Switcher */}
+      <div className="absolute top-6 inset-x-0 px-6 max-w-7xl mx-auto flex justify-between items-center">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-600/20">
+            <ShieldCheck className="w-5 h-5" />
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
-            Cedex Logistics
-          </h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Dispatch, Parcels, and Multi-Currency COD Engine
-          </p>
+          <span className="text-lg font-black text-slate-900 tracking-tight">{t("brandName")}</span>
         </div>
 
-        {error && (
-          <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg font-medium">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Email Address
-            </label>
-            <div className="relative">
-              <Mail className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@company.com"
-                className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Password
-            </label>
-            <div className="relative">
-              <Lock className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-lg flex items-center justify-center gap-2 transition disabled:opacity-50"
-          >
-            {loading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <>
-                <span>Sign In</span>
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
-          </button>
-        </form>
-
-        {/* Quick-fill demo credentials */}
-        <div className="border-t border-slate-100 pt-4">
-          <p className="text-[11px] font-medium text-slate-400 mb-2 text-center uppercase tracking-wider">
-            Quick Fill Demo Accounts (Password123!)
-          </p>
-          <div className="grid grid-cols-3 gap-2 text-xs">
-            <button
-              type="button"
-              onClick={() => fillDemo("merchant@demo.com")}
-              className="px-2 py-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-700 font-medium text-center transition"
-            >
-              Merchant
-            </button>
-            <button
-              type="button"
-              onClick={() => fillDemo("driver@demo.com")}
-              className="px-2 py-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-700 font-medium text-center transition"
-            >
-              Driver
-            </button>
-            <button
-              type="button"
-              onClick={() => fillDemo("admin@demo.com")}
-              className="px-2 py-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-700 font-medium text-center transition"
-            >
-              Hub Admin
-            </button>
-          </div>
-        </div>
-
-        {/* Merchant Onboarding Link */}
-        <div className="border-t border-slate-100 pt-4 text-center">
-          <p className="text-xs text-slate-500">
-            Running an e-commerce business?{" "}
-            <Link href="/register" className="font-bold text-blue-600 hover:text-blue-700 hover:underline">
-              Register as Merchant
-            </Link>
-          </p>
-        </div>
+        <button 
+          type="button"
+          onClick={() => setLang(lang === "en" ? "ar" : "en")}
+          className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-bold transition-all border border-slate-200 shadow-sm flex items-center gap-2 cursor-pointer"
+        >
+          <Globe className="w-4 h-4 text-blue-600" />
+          <span>{lang === "en" ? "العربية" : "English"}</span>
+        </button>
       </div>
 
-      {/* Clean Bottom Legal Footer */}
-      <footer className="w-full text-center py-4">
-        <div className="flex justify-center items-center gap-6 text-xs text-slate-400">
-          <Link href="/about" className="hover:text-slate-600 transition">About</Link>
-          <span>•</span>
-          <Link href="/privacy" className="hover:text-slate-600 transition">Privacy Policy</Link>
-          <span>•</span>
-          <Link href="/terms" className="hover:text-slate-600 transition">Terms of Service</Link>
+      <div className="sm:mx-auto sm:w-full sm:max-w-md mt-10">
+        <div className="bg-white py-10 px-6 sm:px-10 shadow-xl shadow-slate-200/50 rounded-[2.5rem] border border-slate-200/80">
+          
+          <div className="mb-8 text-center sm:text-start">
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              {t("loginHeader")}
+            </h2>
+            <p className="text-sm font-medium text-slate-500 mt-2">
+              {t("loginSubtitle")}
+            </p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-6">
+            
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+                {t("emailAddress")}
+              </label>
+              <div className="relative">
+                <Mail className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRtl ? 'right-4' : 'left-4'}`} />
+                <input 
+                  type="email" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder={t("emailPlaceholder")}
+                  required
+                  className={`w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 text-sm font-semibold text-slate-900 focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all placeholder:text-slate-400 ${isRtl ? 'pr-11 pl-4 text-right' : 'pl-11 pr-4 text-left'}`}
+                  dir="ltr"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+                {t("password")}
+              </label>
+              <div className="relative">
+                <Lock className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRtl ? 'right-4' : 'left-4'}`} />
+                <input 
+                  type="password" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={t("passwordPlaceholder")}
+                  required
+                  className={`w-full bg-slate-50 border border-slate-200 rounded-2xl py-3.5 text-sm font-semibold text-slate-900 focus:ring-2 focus:ring-blue-600 focus:bg-white outline-none transition-all placeholder:text-slate-400 ${isRtl ? 'pr-11 pl-4 text-right' : 'pl-11 pr-4 text-left'}`}
+                  dir="ltr"
+                />
+              </div>
+            </div>
+
+            <button 
+              type="submit" 
+              disabled={loading}
+              className="w-full bg-slate-900 hover:bg-blue-600 text-white rounded-2xl py-4 font-bold text-base shadow-xl shadow-slate-900/10 active:scale-[0.99] transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+            >
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                <>
+                  <span>{t("signIn")}</span>
+                  <ArrowRight className={`w-4 h-4 opacity-80 ${isRtl ? 'rotate-180' : ''}`} />
+                </>
+              )}
+            </button>
+
+          </form>
+
+          {/* Quick Demo Fillers */}
+          <div className="mt-8 pt-6 border-t border-slate-100">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider text-center mb-3">
+              {t("quickFillDemo")}
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              <button 
+                type="button" 
+                onClick={() => fillDemo("admin")}
+                className="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors cursor-pointer text-center"
+              >
+                {t("hubAdmin")}
+              </button>
+              <button 
+                type="button" 
+                onClick={() => fillDemo("merchant")}
+                className="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors cursor-pointer text-center"
+              >
+                {t("merchant")}
+              </button>
+              <button 
+                type="button" 
+                onClick={() => fillDemo("driver")}
+                className="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors cursor-pointer text-center"
+              >
+                {t("driver")}
+              </button>
+            </div>
+          </div>
+
         </div>
-        <p className="text-[11px] text-slate-400 mt-1">© 2026 Cedex Logistics. All rights reserved.</p>
-      </footer>
+
+        <p className="text-center text-xs text-slate-400 font-medium mt-6">
+          {t("footerSecurityNotice")}
+        </p>
+      </div>
+
     </div>
   );
 }

@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+﻿export const dynamic = "force-dynamic";
 export const revalidate = 0;
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -74,7 +74,7 @@ export async function PATCH(req: Request) {
             recipientPhone: p.recipientPhone,
             trackingNumber: p.trackingNumber,
             driverName: driver?.user?.name || "Cedex Courier",
-            driverPhone: driver?.user?.phone || "+961 3 448 482",
+            driverPhone: driver?.user?.phone || "+961 1 000 000",
             codAmount: Number(p.codAmount),
             codCurrency: p.codCurrency as "USD" | "LBP",
           })

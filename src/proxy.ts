@@ -1,79 +1,60 @@
 ﻿import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-interface SessionUser {
-  userId: string;
-  email: string;
-  name: string;
-  role: "COURIER_ADMIN" | "MERCHANT" | "DRIVER";
-  merchantId?: string | null;
-  driverId?: string | null;
-}
+export default function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const sessionCookie = request.cookies.get("courier_session");
 
-export default function proxy(req: NextRequest) {
-  const { pathname } = req.nextUrl;
+  const isAuthRoute = pathname.startsWith("/login") || pathname.startsWith("/register");
+  const isAdminRoute = pathname.startsWith("/admin") || pathname.startsWith("/api/admin") || pathname.startsWith("/api/settlements");
+  const isMerchantRoute = pathname.startsWith("/merchant") || pathname.startsWith("/api/merchant");
+  const isDriverRoute = pathname.startsWith("/driver") || pathname.startsWith("/api/driver");
 
-  // 1. Allow static files, Next.js internals, and public endpoints
-  if (
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/favicon.ico") ||
-    pathname.startsWith("/api/auth/login") ||
-    pathname.startsWith("/api/auth/register") ||
-    pathname.startsWith("/api/track") ||
-    pathname.startsWith("/track") ||
-    pathname.startsWith("/api/webhooks") ||
-    pathname === "/" ||
-    pathname === "/login" ||
-    pathname === "/register" ||
-    pathname === "/about" ||
-    pathname === "/terms" ||
-    pathname === "/privacy"
-  ) {
-    return NextResponse.next();
+  let user: { role?: string } | null = null;
+  if (sessionCookie?.value) {
+    try {
+      user = JSON.parse(sessionCookie.value);
+    } catch {
+      const res = NextResponse.redirect(new URL("/login", request.url));
+      res.cookies.delete("courier_session");
+      return res;
+    }
   }
 
-  // 2. Read session cookie
-  const sessionCookie = req.cookies.get("courier_session");
-
-  if (!sessionCookie?.value) {
+  // 1. Unauthenticated users trying to access protected UI or APIs
+  if (!user && (isAdminRoute || isMerchantRoute || isDriverRoute)) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const loginUrl = new URL("/login", req.url);
-    loginUrl.searchParams.set("from", pathname);
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  let session: SessionUser | null = null;
-  try {
-    session = JSON.parse(sessionCookie.value);
-  } catch {
-    const response = pathname.startsWith("/api/")
-      ? NextResponse.json({ error: "Invalid session" }, { status: 401 })
-      : NextResponse.redirect(new URL("/login", req.url));
-    response.cookies.delete("courier_session");
-    return response;
+  // 2. Already logged in and hitting /login or /register
+  if (user && isAuthRoute) {
+    if (user.role === "COURIER_ADMIN") return NextResponse.redirect(new URL("/admin/dispatch", request.url));
+    if (user.role === "DRIVER") return NextResponse.redirect(new URL("/driver/run", request.url));
+    return NextResponse.redirect(new URL("/merchant/parcels", request.url));
   }
 
-  if (!session?.role) {
-    const response = pathname.startsWith("/api/")
-      ? NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-      : NextResponse.redirect(new URL("/login", req.url));
-    response.cookies.delete("courier_session");
-    return response;
-  }
+  // 3. Role-based isolation
+  if (user) {
+    if (isAdminRoute && user.role !== "COURIER_ADMIN") {
+      if (pathname.startsWith("/api/")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      const dest = user.role === "DRIVER" ? "/driver/run" : "/merchant/parcels";
+      return NextResponse.redirect(new URL(dest, request.url));
+    }
 
-  // 3. Role-based Route Protection for Pages
-  if (pathname.startsWith("/admin") && session.role !== "COURIER_ADMIN") {
-    return NextResponse.redirect(new URL(session.role === "MERCHANT" ? "/merchant/parcels" : "/driver/run", req.url));
-  }
+    if (isDriverRoute && user.role !== "DRIVER" && user.role !== "COURIER_ADMIN") {
+      if (pathname.startsWith("/api/")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.redirect(new URL("/merchant/parcels", request.url));
+    }
 
-  if (pathname.startsWith("/merchant") && session.role !== "MERCHANT") {
-    return NextResponse.redirect(new URL(session.role === "COURIER_ADMIN" ? "/admin/dispatch" : "/driver/run", req.url));
-  }
-
-  if (pathname.startsWith("/driver") && session.role !== "DRIVER") {
-    return NextResponse.redirect(new URL(session.role === "COURIER_ADMIN" ? "/admin/dispatch" : "/merchant/parcels", req.url));
+    if (isMerchantRoute && user.role !== "MERCHANT" && user.role !== "COURIER_ADMIN") {
+      if (pathname.startsWith("/api/")) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.redirect(new URL("/driver/run", request.url));
+    }
   }
 
   return NextResponse.next();
@@ -84,7 +65,11 @@ export const config = {
     "/admin/:path*",
     "/merchant/:path*",
     "/driver/:path*",
-    "/api/:path*",
-    "/((?!_next/static|_next/image|favicon.ico).*)",
+    "/api/admin/:path*",
+    "/api/merchant/:path*",
+    "/api/driver/:path*",
+    "/api/settlements/:path*",
+    "/login",
+    "/register",
   ],
 };

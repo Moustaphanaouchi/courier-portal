@@ -1,7 +1,8 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
+import { useLanguage } from "@/context/LanguageContext";
 import {
   Package,
   Search,
@@ -49,6 +50,7 @@ const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; i
 };
 
 export default function MerchantParcelsHistoryPage() {
+  const { t, isRtl } = useLanguage();
   const [parcels, setParcels] = useState<Parcel[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -184,7 +186,7 @@ export default function MerchantParcelsHistoryPage() {
         ) : filteredParcels.length === 0 ? (
           <div className="p-12 text-center text-slate-500">
             <Package className="w-10 h-10 mx-auto text-slate-300 mb-3" />
-            <p className="font-semibold">No parcels found</p>
+            <p className="font-semibold">{t("noParcelsFound")}</p>
             <p className="text-xs text-slate-400 mt-1">Try adjusting your search or filters.</p>
           </div>
         ) : (
@@ -193,11 +195,11 @@ export default function MerchantParcelsHistoryPage() {
               <thead className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 <tr>
                   <th className="px-5 py-3">Tracking / Date</th>
-                  <th className="px-5 py-3">Recipient</th>
-                  <th className="px-5 py-3">Destination</th>
+                  <th className="px-5 py-3">{t("recipient")}</th>
+                  <th className="px-5 py-3">{t("destination")}</th>
                   <th className="px-5 py-3">COD Amount</th>
-                  <th className="px-5 py-3">Status</th>
-                  <th className="px-5 py-3 text-right">Actions</th>
+                  <th className="px-5 py-3">{t("status")}</th>
+                  <th className="px-5 py-3 text-right">{t("actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
