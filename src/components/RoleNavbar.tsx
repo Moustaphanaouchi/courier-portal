@@ -102,6 +102,16 @@ export default function RoleNavbar() {
                     {t("dispatchRuns")}
                   </Link>
                   <Link
+                    href="/admin/drivers"
+                    className={`px-3 py-1.5 rounded-lg transition ${
+                      pathname === "/admin/drivers"
+                        ? "bg-slate-800 text-blue-400"
+                        : "text-slate-300 hover:text-white hover:bg-slate-800/60"
+                    }`}
+                  >
+                    {lang === "ar" ? "السائقين" : "Drivers"}
+                  </Link>
+                  <Link
                     href="/admin/settlements"
                     className={`px-3 py-1.5 rounded-lg transition ${
                       pathname === "/admin/settlements"
@@ -110,6 +120,16 @@ export default function RoleNavbar() {
                     }`}
                   >
                     {t("settlements")}
+                  </Link>
+                  <Link
+                    href="/admin/payouts"
+                    className={`px-3 py-1.5 rounded-lg transition ${
+                      pathname === "/admin/payouts"
+                        ? "bg-slate-800 text-blue-400"
+                        : "text-slate-300 hover:text-white hover:bg-slate-800/60"
+                    }`}
+                  >
+                    {lang === "ar" ? "سندات المتاجر" : "Merchant Payouts"}
                   </Link>
                   <Link
                     href="/admin/parcels/print-batch"
@@ -165,6 +185,16 @@ export default function RoleNavbar() {
                     }`}
                   >
                     {lang === "ar" ? "الدفعات والمستحقات" : "Payouts"}
+                  </Link>
+                  <Link
+                    href="/merchant/settings"
+                    className={`px-3 py-1.5 rounded-lg transition ${
+                      pathname === "/merchant/settings"
+                        ? "bg-slate-800 text-blue-400"
+                        : "text-slate-300 hover:text-white hover:bg-slate-800/60"
+                    }`}
+                  >
+                    {lang === "ar" ? "الإعدادات" : "Settings"}
                   </Link>
                 </>
               )}
@@ -242,8 +272,14 @@ export default function RoleNavbar() {
               <Link href="/admin/dispatch" className="block px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 text-slate-200">
                 {t("dispatchRuns")}
               </Link>
+              <Link href="/admin/drivers" className="block px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 text-slate-200">
+                {lang === "ar" ? "السائقين" : "Drivers"}
+              </Link>
               <Link href="/admin/settlements" className="block px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 text-slate-200">
                 {t("settlements")}
+              </Link>
+              <Link href="/admin/payouts" className="block px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 text-slate-200">
+                {lang === "ar" ? "سندات المتاجر" : "Merchant Payouts"}
               </Link>
               <Link href="/admin/parcels/print-batch" className="block px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 text-slate-200">
                 {lang === "ar" ? "طباعة مجمعة" : "Print Batch"}
@@ -264,6 +300,19 @@ export default function RoleNavbar() {
               <Link href="/merchant/payouts" className="block px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 text-slate-200">
                 {lang === "ar" ? "الدفعات والمستحقات" : "Payouts"}
               </Link>
+              <Link href="/merchant/settings" className="block px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 text-slate-200">
+                {lang === "ar" ? "الإعدادات" : "Settings"}
+              </Link>
+                  <Link
+                    href="/merchant/settings"
+                    className={`px-3 py-1.5 rounded-lg transition ${
+                      pathname === "/merchant/settings"
+                        ? "bg-slate-800 text-blue-400"
+                        : "text-slate-300 hover:text-white hover:bg-slate-800/60"
+                    }`}
+                  >
+                    {lang === "ar" ? "الإعدادات" : "Settings"}
+                  </Link>
             </>
           )}
           {user.role === "DRIVER" && (
@@ -276,3 +325,4 @@ export default function RoleNavbar() {
     </nav>
   );
 }
+

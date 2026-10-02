@@ -1,288 +1,283 @@
 ﻿"use client";
 
-import { useLanguage } from "@/context/LanguageContext";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { 
-  ArrowLeft, 
-  DollarSign, 
-  Receipt, 
-  RefreshCw, 
-  Clock, 
-  CheckCircle2, 
-  ArrowUpRight, 
-  Building2, 
-  Wallet, 
-  FileText 
+import { useLanguage } from "@/context/LanguageContext";
+import {
+  Banknote,
+  Clock,
+  CheckCircle2,
+  FileText,
+  DollarSign,
+  TrendingUp,
+  CreditCard,
+  ArrowRight,
+  ExternalLink,
+  Printer,
 } from "lucide-react";
 
-interface ParcelItem {
+interface Parcel {
   id: string;
   trackingNumber: string;
   recipientName: string;
   city: string;
   codAmount: number | string;
-  codCurrency: "USD" | "LBP";
+  codCurrency: string;
   deliveryFee: number | string;
   isMerchantPaid: boolean;
   deliveredAt: string | null;
+  payoutId: string | null;
 }
 
-interface PayoutRecord {
+interface HistoricalPayout {
   id: string;
+  referenceNumber: string;
   grossCodUsd: number | string;
   totalFeesUsd: number | string;
   netPayoutUsd: number | string;
   paymentMethod: string;
-  referenceNumber: string | null;
-  isSettled: boolean;
   createdAt: string;
-  parcels: { id: string; trackingNumber: string; codAmount: number | string; codCurrency: string }[];
-}
-
-interface PayoutSummary {
-  pendingGrossUsd: number;
-  pendingGrossLbp: number;
-  pendingFeesUsd: number;
-  netPayableUsd: number;
-  pendingCount: number;
+  parcels: { id: string; trackingNumber: string; codAmount: number | string }[];
 }
 
 export default function MerchantPayoutsPage() {
-  const { t, isRtl } = useLanguage();
-  const [summary, setSummary] = useState<PayoutSummary | null>(null);
-  const [parcels, setParcels] = useState<ParcelItem[]>([]);
-  const [payouts, setPayouts] = useState<PayoutRecord[]>([]);
-  const [companyName, setCompanyName] = useState<string>("Cedar Commerce SAL");
+  const { lang, isRtl } = useLanguage();
   const [loading, setLoading] = useState(true);
-
-  async function loadPayoutData() {
-    setLoading(true);
-    try {
-      const meRes = await fetch("/api/auth/me");
-      const meData = await meRes.json();
-      const merchantId = meData.user?.merchantId;
-
-      const res = await fetch(`/api/merchant/payouts?merchantId=${merchantId || ""}`);
-      const data = await res.json();
-
-      if (data.success) {
-        setSummary(data.summary);
-        setParcels(data.deliveredParcels);
-        setPayouts(data.historicalPayouts);
-        if (data.merchant?.companyName) {
-          setCompanyName(data.merchant.companyName);
-        }
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const [data, setData] = useState<{
+    summary: {
+      pendingGrossUsd: number;
+      pendingGrossLbp: number;
+      pendingFeesUsd: number;
+      netPayableUsd: number;
+      pendingCount: number;
+    };
+    deliveredParcels: Parcel[];
+    historicalPayouts: HistoricalPayout[];
+  } | null>(null);
 
   useEffect(() => {
-    loadPayoutData();
+    async function loadData() {
+      try {
+        const res = await fetch("/api/merchant/payouts");
+        const json = await res.json();
+        if (json.success) {
+          setData(json);
+        }
+      } catch (err) {
+        console.error("Failed to load payouts:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
   }, []);
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  const summary = data?.summary || {
+    pendingGrossUsd: 0,
+    pendingGrossLbp: 0,
+    pendingFeesUsd: 0,
+    netPayableUsd: 0,
+    pendingCount: 0,
+  };
+
+  const pendingParcels = data?.deliveredParcels.filter((p) => !p.isMerchantPaid) || [];
+  const historicalPayouts = data?.historicalPayouts || [];
+
   return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Navigation Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 gap-4 border-b border-slate-200">
-          <div>
-            <Link href="/" className="inline-flex items-center text-xs font-semibold text-slate-500 hover:text-slate-900 mb-2">
-              <ArrowLeft className="w-3.5 h-3.5 mr-1" /> Operations Hub
-            </Link>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center">
-                <Receipt className="w-4 h-4" />
+    <div className={`min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8 font-sans ${isRtl ? "font-cairo" : ""}`} dir={isRtl ? "rtl" : "ltr"}>
+      <div className="max-w-7xl mx-auto space-y-6">
+        
+        {/* Header */}
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 text-blue-600 font-bold text-xs uppercase tracking-wider mb-1">
+                <Banknote className="w-4 h-4" />
+                <span>{lang === "ar" ? "الذمم المالية والتحويلات" : "Financial Remittance"}</span>
               </div>
-              <h1 className="text-2xl font-bold text-slate-900">COD Payout Statements</h1>
-            </div>
-            <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
-              <Building2 className="w-3.5 h-3.5 text-slate-400" />
-              <span>Statement for <strong className="text-slate-700">{companyName}</strong></span>
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              href="/merchant/parcels/new"
-              className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition"
-            >
-              <span>New Order</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </Link>
-            <button
-              onClick={loadPayoutData}
-              disabled={loading}
-              className="p-2 border border-slate-200 bg-white rounded-lg hover:bg-slate-50 text-slate-600"
-              title="Refresh ledger"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-            </button>
-          </div>
-        </div>
-
-        {/* Ledger Balance Summary Cards */}
-        {summary && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
-            {/* Card 1: Net Remittance Payable */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
-              <div>
-                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 flex items-center gap-1">
-                  <Wallet className="w-3.5 h-3.5 text-emerald-600" /> Net Payable Balance (USD)
-                </span>
-                <p className="text-3xl font-black text-emerald-600 mt-2 font-mono">
-                  ${summary.netPayableUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </p>
-              </div>
-              <p className="text-[11px] text-slate-400 mt-3 pt-3 border-t border-slate-100">
-                Gross USD minus courier handling fees
-              </p>
-            </div>
-
-            {/* Card 2: Pending LBP Balance */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
-              <div>
-                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 flex items-center gap-1">
-                  <DollarSign className="w-3.5 h-3.5 text-blue-600" /> Gross Cash Collected (LBP)
-                </span>
-                <p className="text-2xl font-black text-slate-900 mt-2 font-mono">
-                  {summary.pendingGrossLbp.toLocaleString()} <span className="text-xs font-normal text-slate-500">LBP</span>
-                </p>
-              </div>
-              <p className="text-[11px] text-slate-400 mt-3 pt-3 border-t border-slate-100">
-                Collected from {summary.pendingCount} delivered stops
-              </p>
-            </div>
-
-            {/* Card 3: Courier Delivery Fees */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
-              <div>
-                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 flex items-center gap-1">
-                  <FileText className="w-3.5 h-3.5 text-purple-600" /> Courier Fees Retained
-                </span>
-                <p className="text-2xl font-black text-slate-900 mt-2 font-mono">
-                  ${summary.pendingFeesUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </p>
-              </div>
-              <p className="text-[11px] text-slate-400 mt-3 pt-3 border-t border-slate-100">
-                Deducted automatically per standard tariff
+              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                {lang === "ar" ? "أرصدة المبيعات وسندات الصرف" : "COD Payouts & Settlement Invoices"}
+              </h1>
+              <p className="text-xs sm:text-sm font-medium text-slate-500 mt-1">
+                {lang === "ar"
+                  ? "متابعة الكاش المحصل من الزبائن، تفقيط رسوم الشحن، واستعراض فواتير التحويل الرسمية."
+                  : "Track gross COD collections, courier delivery fees, and view official tax remittance invoices."}
               </p>
             </div>
           </div>
-        )}
 
-        {/* Detailed Tables */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-          {/* Delivered Parcels Audit */}
-          <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-              <div>
-                <h2 className="text-sm font-bold text-slate-900">Delivered Shipments Audit</h2>
-                <p className="text-xs text-slate-400 mt-0.5">Parcels completed with cash collected</p>
-              </div>
-              <span className="text-xs font-mono font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
-                {parcels.length} Total
+          {/* Stat Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-6 pt-6 border-t border-slate-100">
+            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/80">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                {lang === "ar" ? "الكاش المعلق بالدولار" : "Gross Pending (USD)"}
+              </span>
+              <p className="text-xl sm:text-2xl font-black font-mono text-slate-900 mt-1">
+                ${summary.pendingGrossUsd.toFixed(2)}
+              </p>
+              <span className="text-[10px] text-slate-500 font-medium">
+                {summary.pendingCount} {lang === "ar" ? "طرد بانتظار الصرف" : "orders waiting remittance"}
               </span>
             </div>
 
+            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/80">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                {lang === "ar" ? "الكاش المعلق بالليرة" : "Gross Pending (LBP)"}
+              </span>
+              <p className="text-xl sm:text-2xl font-black font-mono text-slate-900 mt-1">
+                {summary.pendingGrossLbp.toLocaleString()} LBP
+              </p>
+              <span className="text-[10px] text-blue-600 font-medium">@ 89,500 LBP/USD</span>
+            </div>
+
+            <div className="bg-rose-50/60 rounded-2xl p-4 border border-rose-100">
+              <span className="text-[10px] font-bold text-rose-700 uppercase tracking-wider block">
+                {lang === "ar" ? "رسوم الشحن المستقطعة" : "Courier Fees Deducted"}
+              </span>
+              <p className="text-xl sm:text-2xl font-black font-mono text-rose-700 mt-1">
+                -${summary.pendingFeesUsd.toFixed(2)}
+              </p>
+              <span className="text-[10px] text-rose-600 font-medium">Auto-deducted from payout</span>
+            </div>
+
+            <div className="bg-emerald-50/70 rounded-2xl p-4 border border-emerald-200">
+              <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">
+                {lang === "ar" ? "الصافي المستحق لك الآن" : "Net Remittance Balance"}
+              </span>
+              <p className="text-xl sm:text-2xl font-black font-mono text-emerald-700 mt-1">
+                ${summary.netPayableUsd.toFixed(2)}
+              </p>
+              <span className="text-[10px] font-bold text-emerald-800">Ready for disbursement</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Remittance Settlement Vouchers */}
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-black text-slate-900">
+                {lang === "ar" ? "فواتير وسندات التحويل المصروفة" : "Settlement Vouchers & Official Invoices"}
+              </h2>
+              <p className="text-xs text-slate-500 font-medium">
+                {lang === "ar"
+                  ? "اضغط على أي رقم مرجع لعرض وطباعة الفاتورة التفصيلية مع ختم المركز."
+                  : "Click any voucher reference number to inspect and print the full tax remittance invoice."}
+              </p>
+            </div>
+          </div>
+
+          {historicalPayouts.length === 0 ? (
+            <div className="p-8 text-center border-2 border-dashed border-slate-200 rounded-2xl space-y-2">
+              <FileText className="w-8 h-8 text-slate-300 mx-auto" />
+              <p className="text-xs font-bold text-slate-600">
+                {lang === "ar" ? "لم تصدر أي سندات صرف حتى الآن" : "No historical remittance vouchers issued yet."}
+              </p>
+              <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
+                {lang === "ar"
+                  ? "يتم إصدار الفواتير فور قيام إدارة المركز بتحويل مبالغ الـ COD المسلمة إلى حسابكم."
+                  : "Invoices are generated when courier admins disburse batch settlements to your store."}
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {historicalPayouts.map((voucher) => (
+                <div key={voucher.id} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/merchant/payouts/${voucher.id}`}
+                        className="font-mono font-black text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1.5 transition underline-offset-4 hover:underline"
+                      >
+                        <span>{voucher.referenceNumber}</span>
+                        <ExternalLink className="w-3.5 h-3.5 opacity-70" />
+                      </Link>
+                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                        {lang === "ar" ? "مسدد ✓" : "Paid"}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-slate-500 font-medium">
+                      {new Date(voucher.createdAt).toLocaleDateString()} • Method:{" "}
+                      <span className="font-semibold text-slate-700">{voucher.paymentMethod.replace("_", " ")}</span> •{" "}
+                      {voucher.parcels?.length || 0} shipments remitted
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="text-start sm:text-end">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                        {lang === "ar" ? "صافي الدفعة المحولة" : "Net Remitted"}
+                      </span>
+                      <span className="text-base font-black font-mono text-emerald-600">
+                        ${Number(voucher.netPayoutUsd).toFixed(2)} USD
+                      </span>
+                    </div>
+
+                    <Link
+                      href={`/merchant/payouts/${voucher.id}`}
+                      className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+                    >
+                      <Printer className="w-3.5 h-3.5" />
+                      <span>{lang === "ar" ? "عرض الفاتورة" : "View Invoice"}</span>
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Pending Shipments Breakdown */}
+        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-sm space-y-4">
+          <h2 className="text-lg font-black text-slate-900">
+            {lang === "ar" ? "الطرود المسلمة بانتظار الإشعار القادم" : "Delivered Shipments Pending Remittance"}
+          </h2>
+
+          {pendingParcels.length === 0 ? (
+            <p className="text-xs text-slate-400 italic">
+              {lang === "ar" ? "لا توجد طرود معلقة. جميع الطلبات المسلمة تم تسديدها بالكامل!" : "No pending delivered orders. Everything has been settled!"}
+            </p>
+          ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-600">
-                <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 uppercase font-semibold text-[10px] tracking-wider">
-                  <tr>
-                    <th className="p-3">Waybill No.</th>
-                    <th className="p-3">Recipient / City</th>
-                    <th className="p-3">Gross COD</th>
-                    <th className="p-3">Courier Fee</th>
-                    <th className="p-3 text-right">Payout {t("payoutStatus")}</th>
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase text-[10px]">
+                    <th className="pb-3 text-start">{lang === "ar" ? "رقم الشحنة" : "Tracking #"}</th>
+                    <th className="pb-3 text-start">{lang === "ar" ? "المستلم والمدينة" : "Recipient"}</th>
+                    <th className="pb-3 text-end">{lang === "ar" ? "الكاش المحصل" : "Gross COD"}</th>
+                    <th className="pb-3 text-end">{lang === "ar" ? "أجور التوصيل" : "Fee"}</th>
+                    <th className="pb-3 text-end">{lang === "ar" ? "صافي المتجر" : "Net"}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {loading ? (
-                    <tr>
-                      <td colSpan={5} className="p-8 text-center text-slate-400">Loading ledger data...</td>
-                    </tr>
-                  ) : parcels.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="p-8 text-center text-slate-400">
-                        No delivered parcels recorded yet.
+                  {pendingParcels.map((p) => (
+                    <tr key={p.id}>
+                      <td className="py-3 font-mono font-bold text-slate-900">{p.trackingNumber}</td>
+                      <td className="py-3 text-slate-600">{p.recipientName} ({p.city})</td>
+                      <td className="py-3 text-end font-mono font-bold text-slate-900">
+                        {p.codCurrency === "USD" ? `$${p.codAmount}` : `${Number(p.codAmount).toLocaleString()} LBP`}
+                      </td>
+                      <td className="py-3 text-end font-mono text-rose-500">-${p.deliveryFee}</td>
+                      <td className="py-3 text-end font-mono font-black text-emerald-600">
+                        ${(Number(p.codAmount) - Number(p.deliveryFee)).toFixed(2)}
                       </td>
                     </tr>
-                  ) : (
-                    parcels.map((parcel) => (
-                      <tr key={parcel.id} className="hover:bg-slate-50/50">
-                        <td className="p-3 font-mono font-bold text-slate-900">
-                          {parcel.trackingNumber}
-                        </td>
-                        <td className="p-3">
-                          <div className="font-semibold text-slate-800">{parcel.recipientName}</div>
-                          <div className="text-[11px] text-slate-400">{parcel.city}</div>
-                        </td>
-                        <td className="p-3 font-mono font-bold text-slate-900">
-                          {parcel.codCurrency === "USD"
-                            ? `$${parcel.codAmount}`
-                            : `${Number(parcel.codAmount).toLocaleString()} LBP`}
-                        </td>
-                        <td className="p-3 font-mono text-slate-500">
-                          -${parcel.deliveryFee}
-                        </td>
-                        <td className="p-3 text-right">
-                          {parcel.isMerchantPaid ? (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                              <CheckCircle2 className="w-3 h-3" /> Remitted
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
-                              <Clock className="w-3 h-3" /> Ready for Payout
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    ))
-                  )}
+                  ))}
                 </tbody>
               </table>
             </div>
-          </div>
-
-          {/* Historical Remittance Statements */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
-            <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-              <Receipt className="w-4 h-4 text-blue-600" />
-              <h3 className="font-bold text-slate-900 text-sm">Settlement Vouchers</h3>
-            </div>
-
-            {payouts.length === 0 ? (
-              <div className="text-center py-8 text-slate-400 text-xs">
-                <FileText className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-                <p>No historical remittance vouchers issued yet.</p>
-                <p className="text-[10px] text-slate-400 mt-1">
-                  Vouchers are generated when courier admins disburse batch settlements.
-                </p>
-              </div>
-            ) : (
-              <div className="divide-y divide-slate-100">
-                {payouts.map((payout) => (
-                  <div key={payout.id} className="py-3 text-xs">
-                    <div className="flex items-center justify-between font-mono font-bold text-slate-900">
-                      <span>${Number(payout.netPayoutUsd).toLocaleString()}</span>
-                      <span className="text-[10px] font-sans font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
-                        {payout.paymentMethod}
-                      </span>
-                    </div>
-                    <div className="text-[11px] text-slate-400 mt-1 flex items-center justify-between">
-                      <span>Ref: {payout.referenceNumber || "Cash Transfer"}</span>
-                      <span>{new Date(payout.createdAt).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          )}
         </div>
+
       </div>
     </div>
   );

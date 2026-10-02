@@ -1,4 +1,6 @@
-﻿import { NextResponse } from "next/server";
+﻿export const dynamic = "force-dynamic";
+export const revalidate = 0;
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -6,33 +8,37 @@ export async function GET() {
     const drivers = await prisma.driver.findMany({
       where: { isActive: true },
       include: {
-        user: { select: { name: true, phone: true } },
+        user: { select: { id: true, name: true, phone: true, email: true } },
         assignedParcels: {
           where: {
             status: "DELIVERED",
-            isCodCollected: true,
-            settlementId: null, // Only parcels pending cash handover
           },
           select: {
             id: true,
             trackingNumber: true,
             recipientName: true,
+            recipientPhone: true,
+            governorate: true,
             city: true,
             codAmount: true,
             codCurrency: true,
+            deliveryFee: true,
             deliveredAt: true,
-            merchant: { select: { companyName: true } },
+            settlementId: true,
+            merchant: { select: { id: true, companyName: true } },
           },
+          orderBy: { deliveredAt: "desc" },
         },
         dailySettlements: {
           orderBy: { createdAt: "desc" },
-          take: 5,
+          take: 20,
         },
       },
     });
 
     return NextResponse.json({ success: true, drivers });
   } catch (error: any) {
+    console.error("Settlement GET error:", error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
@@ -47,7 +53,7 @@ export async function POST(req: Request) {
     }
 
     const settlement = await prisma.$transaction(async (tx) => {
-      // 1. Create settlement ledger entry
+      // 1. Create permanent hub settlement batch
       const created = await tx.driverSettlement.create({
         data: {
           driverId,
@@ -59,14 +65,13 @@ export async function POST(req: Request) {
         },
       });
 
-      // 2. Link all parcels to this settlement so they are cleared from the pending list
+      // 2. Attach parcels to this settlement
       if (Array.isArray(parcelIds) && parcelIds.length > 0) {
         await tx.parcel.updateMany({
-          where: {
-            id: { in: parcelIds },
-          },
+          where: { id: { in: parcelIds } },
           data: {
             settlementId: created.id,
+            isCodCollected: true,
           },
         });
       }
