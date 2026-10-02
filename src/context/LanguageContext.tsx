@@ -137,7 +137,7 @@ export const translations = {
     status_RETURNED: "Returned",
     status_CANCELLED: "Cancelled",
 
-    // Recipient Section
+    // Recipient Section & Form fields
     recipientInfo: "Recipient Information",
     customerName: "Customer Full Name",
     customerNamePlaceholder: "e.g. Recipient Full Name",
@@ -355,7 +355,7 @@ export const translations = {
     status_RETURNED: "مرتجع",
     status_CANCELLED: "ملغى",
 
-    // Recipient Section
+    // Recipient Section & Form fields
     recipientInfo: "بيانات العميل المستلم",
     customerName: "اسم المستلم الكامل",
     customerNamePlaceholder: "مثال: اسم المستلم الثلاثي",
