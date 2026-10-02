@@ -55,40 +55,27 @@ export const translations = {
     homeHeroSubtitle: "Multi-currency USD & LBP cash-on-delivery tracking, hub dispatching, and automated settlements.",
     trackBtn: "Track",
     trackInputPlaceholder: "Enter 10-digit tracking code (e.g. CDX-882194)...",
-
     signIn: "Sign In",
 
-    // Hub Dispatch Board Card
+    // Homepage Cards
     cardDispatchTitle: "Hub Dispatch Board",
     cardDispatchDesc: "Assign incoming parcels to drivers by Lebanese governorate and trigger WhatsApp tracking webhooks.",
     cardDispatchBtn: "Open Dispatch",
-
-    // Cash Settlements Card
     cardSettlementsTitle: "Cash Settlements",
     cardSettlementsDesc: "Reconcile physical USD and LBP cash handed over by drivers at the hub counter.",
     cardSettlementsBtn: "Reconcile Cash",
-
-    // Batch Waybill Printing Card
     cardBatchPrintTitle: "Batch Waybill Printing",
     cardBatchPrintDesc: "Continuous 4×6 inch thermal roll printing with scannable barcodes.",
     cardBatchPrintBtn: "Print Labels",
-
-    // Driver Mobile Run Sheet Card
     cardDriverRunTitle: "Driver Mobile Run Sheet",
     cardDriverRunDesc: "Mobile view with customer calling, WhatsApp routing, camera barcode scanner, and live cash tallies.",
     cardDriverRunBtn: "Start Run",
-
-    // Book Single Parcel Card
     cardBookParcelTitle: "Book Single Parcel",
     cardBookParcelDesc: "Register delivery orders with Lebanese regional governorates and dual USD/LBP COD.",
     cardBookParcelBtn: "Create Order",
-
-    // Bulk CSV Manifest Card
     cardBulkCsvTitle: "Bulk CSV Manifest Ingestion",
     cardBulkCsvDesc: "Upload Shopify/WooCommerce CSV exports to generate dozens of waybills in seconds.",
     cardBulkCsvBtn: "Upload Manifest",
-
-    // Merchant Payout Statements Card
     cardMerchantPayoutTitle: "Merchant Payout Statements",
     cardMerchantPayoutDesc: "Track gross COD collected, deducted delivery fees, and net payable balances.",
     cardMerchantPayoutBtn: "View Statement",
@@ -189,7 +176,7 @@ export const translations = {
     addAnotherParcel: "Add Another Parcel",
     backToOperationsHub: "Back to Operations Hub",
 
-    // Region Names (Lebanon)
+    // Region Names
     reg_beirut: "Beirut",
     reg_mount_lebanon: "Mount Lebanon",
     reg_north: "North Lebanon",
@@ -200,6 +187,36 @@ export const translations = {
     // Currencies
     curr_usd: "USD ($)",
     curr_lbp: "LBP (Lebanese Pound)",
+
+    // Driver App
+    scanBarcode: "Scan Barcode",
+    markDelivered: "Mark Delivered",
+    markFailed: "Report Issue",
+    callCustomer: "Call",
+    whatsappCustomer: "WhatsApp",
+    collectCash: "Collect Cash",
+    pendingDeliveries: "Pending Deliveries",
+
+    // Admin Dispatch
+    hubDispatchBoard: "Hub Dispatch & Assignment",
+    hubDispatchSubtitle: "Route parcels to drivers based on Lebanese governorates.",
+    unassignedParcels: "Unassigned Parcels",
+    assignToDriver: "Assign to Driver",
+    selectDriver: "Select Driver...",
+    filterByRegion: "Filter by Region",
+    dispatchSuccess: "Successfully dispatched!",
+    noUnassigned: "No parcels pending dispatch.",
+    assignBtn: "Assign",
+
+    // Admin Settlements
+    settlementsTitle: "Cash Settlements & Reconciliation",
+    settlementsSubtitle: "Verify physical USD and LBP cash collected by drivers at the end of their shift.",
+    driverName: "Driver Name",
+    expectedUSD: "Expected USD",
+    expectedLBP: "Expected LBP",
+    collectedParcels: "Collected Parcels",
+    actionReconcile: "Reconcile Cash",
+    noPendingSettlements: "No pending settlements at the moment."
   },
   ar: {
     // Brand & General
@@ -251,40 +268,27 @@ export const translations = {
     homeHeroSubtitle: "تتبع مبالغ الدفع عند الاستلام بالدولار والليرة اللبنانية، إدارة توزيع الشحنات، والتسويات المالية الفورية.",
     trackBtn: "تتبع شحنتك",
     trackInputPlaceholder: "أدخل كود التتبع المؤلف من 10 خانات (مثال: CDX-882194)...",
-
     signIn: "تسجيل الدخول",
 
-    // Hub Dispatch Board Card
+    // Homepage Cards
     cardDispatchTitle: "لوحة توزيع الشحنات والرحلات",
     cardDispatchDesc: "توزيع الطرود الواردة على السائقين حسب المحافظات اللبنانية وإرسال روابط التتبع عبر واتساب.",
     cardDispatchBtn: "فتح التوزيع",
-
-    // Cash Settlements Card
     cardSettlementsTitle: "تسوية التحصيل النقدي (COD)",
     cardSettlementsDesc: "مطابقة وتسليم الأموال النقدية بالدولار والليرة اللبنانية المستلمة من السائقين في المركز.",
     cardSettlementsBtn: "تسوية المبالغ",
-
-    // Batch Waybill Printing Card
     cardBatchPrintTitle: "طباعة البوالص دفعة واحدة",
     cardBatchPrintDesc: "طباعة متواصلة على ورق الملصقات الحراري مقاس 4×6 إنش مع باركود قابل للمسح السريع.",
     cardBatchPrintBtn: "طباعة الملصقات",
-
-    // Driver Mobile Run Sheet Card
     cardDriverRunTitle: "جدول توصيل السائق عبر الهاتف",
     cardDriverRunDesc: "واجهة مخصصة للهاتف تتيح الاتصال المباشر بالزبون، فتح واتساب، مسح الباركود بالكاميرا، وحساب المبالغ المستلمة.",
     cardDriverRunBtn: "بدء التوصيل",
-
-    // Book Single Parcel Card
     cardBookParcelTitle: "تسجيل طرد مفرد",
     cardBookParcelDesc: "إنشاء طلب توصيل جديد لجميع المحافظات مع مبالغ الدفع عند الاستلام بالدولار والليرة.",
     cardBookParcelBtn: "إنشاء الطلب",
-
-    // Bulk CSV Manifest Card
     cardBulkCsvTitle: "استيراد الشحنات بالجملة (CSV)",
     cardBulkCsvDesc: "رفع ملفات إكسل وCSV المصدرة من شوبيفاي أو ووكومرس لإنشاء عشرات البوالص بثوانٍ.",
     cardBulkCsvBtn: "رفع الملف",
-
-    // Merchant Payout Statements Card
     cardMerchantPayoutTitle: "كشوفات مستحقات التجار",
     cardMerchantPayoutDesc: "متابعة إجمالي مبالغ التحصيل المستلمة، أجور التوصيل المقتطعة، وصافي الأرصدة المستحقة للدفع.",
     cardMerchantPayoutBtn: "عرض الكشف",
@@ -385,7 +389,7 @@ export const translations = {
     addAnotherParcel: "إضافة طرد جديد",
     backToOperationsHub: "العودة لمركز العمليات",
 
-    // Region Names (Lebanon)
+    // Region Names
     reg_beirut: "بيروت",
     reg_mount_lebanon: "جبل لبنان",
     reg_north: "لبنان الشمالي وعكار",
@@ -396,6 +400,36 @@ export const translations = {
     // Currencies
     curr_usd: "دولار أمريكي ($)",
     curr_lbp: "ليرة لبنانية (LBP)",
+
+    // Driver App
+    scanBarcode: "مسح الباركود",
+    markDelivered: "تم التسليم",
+    markFailed: "تحديث الحالة",
+    callCustomer: "اتصال",
+    whatsappCustomer: "واتساب",
+    collectCash: "تحصيل نقدي",
+    pendingDeliveries: "الشحنات المتبقية",
+
+    // Admin Dispatch
+    hubDispatchBoard: "لوحة توزيع المركز",
+    hubDispatchSubtitle: "توجيه الشحنات للسائقين حسب المحافظات اللبنانية.",
+    unassignedParcels: "الشحنات غير الموزعة",
+    assignToDriver: "تعيين لسائق",
+    selectDriver: "اختر السائق...",
+    filterByRegion: "تصفية حسب المنطقة",
+    dispatchSuccess: "تم تعيين الشحنات بنجاح!",
+    noUnassigned: "لا توجد شحنات بانتظار التوزيع.",
+    assignBtn: "تعيين",
+
+    // Admin Settlements
+    settlementsTitle: "تسويات التحصيل النقدي (COD)",
+    settlementsSubtitle: "مطابقة الأموال النقدية بالدولار والليرة المستلمة من السائقين في نهاية الوردية.",
+    driverName: "اسم السائق",
+    expectedUSD: "المتوقع (دولار)",
+    expectedLBP: "المتوقع (ليرة)",
+    collectedParcels: "الطرود المحصلة",
+    actionReconcile: "تسوية الصندوق",
+    noPendingSettlements: "لا توجد تسويات معلقة في الوقت الحالي."
   },
 };
 

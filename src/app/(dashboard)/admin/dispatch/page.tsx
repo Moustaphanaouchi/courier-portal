@@ -1,301 +1,137 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import {  ArrowLeft, Printer, Truck, CheckSquare, Square, RefreshCw, AlertCircle, ShieldAlert, Check , FileText } from "lucide-react";
+import { useState } from "react";
+import { useLanguage } from "@/context/LanguageContext";
+import { Truck, Map, Search, Package, Filter, ArrowRight } from "lucide-react";
 
-interface ParcelItem {
-  id: string;
-  trackingNumber: string;
-  recipientName: string;
-  recipientPhone: string;
-  governorate: string;
-  city: string;
-  detailedAddress: string;
-  codAmount: string | number;
-  codCurrency: "USD" | "LBP";
-  status: string;
-  merchant: { companyName: string; pickupCity: string };
-  driver: { user: { name: string } } | null;
-}
+export default function AdminDispatchPage() {
+  const { t, isRtl } = useLanguage();
 
-interface DriverItem {
-  id: string;
-  vehicleType: string | null;
-  plateNumber: string | null;
-  user: { name: string; phone: string };
-}
-
-export default function DispatchBoardPage() {
-  const [parcels, setParcels] = useState<ParcelItem[]>([]);
-  const [drivers, setDrivers] = useState<DriverItem[]>([]);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [selectedDriverId, setSelectedDriverId] = useState<string>("");
-  const [filterGov, setFilterGov] = useState<string>("ALL");
-  const [loading, setLoading] = useState(true);
-  const [assigning, setAssigning] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-
-  async function loadData() {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/admin/dispatch");
-      const data = await res.json();
-      if (data.success) {
-        setParcels(data.parcels);
-        setDrivers(data.drivers);
-        if (data.drivers.length > 0 && !selectedDriverId) {
-          setSelectedDriverId(data.drivers[0].id);
-        }
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  function toggleSelect(id: string) {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
-    );
-  }
-
-  function toggleSelectAll(filtered: ParcelItem[]) {
-    if (selectedIds.length === filtered.length) {
-      setSelectedIds([]);
-    } else {
-      setSelectedIds(filtered.map((p) => p.id));
-    }
-  }
-
-  async function handleAssign() {
-    if (selectedIds.length === 0 || !selectedDriverId) return;
-    setAssigning(true);
-    setMessage(null);
-
-    try {
-      const res = await fetch("/api/admin/dispatch", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ parcelIds: selectedIds, driverId: selectedDriverId }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setMessage(`Assigned ${data.count} parcels to driver! Sent ${data.whatsappNotified || data.count} WhatsApp tracking notifications.`);
-        setSelectedIds([]);
-        loadData();
-      } else {
-        setMessage(data.error || "Failed to assign parcels");
-      }
-    } catch (err: any) {
-      setMessage(err.message);
-    } finally {
-      setAssigning(false);
-    }
-  }
-
-  const governorates = ["ALL", ...Array.from(new Set(parcels.map((p) => p.governorate)))];
-  const filteredParcels = filterGov === "ALL" ? parcels : parcels.filter((p) => p.governorate === filterGov);
+  // Mock unassigned parcels for UI layout
+  const unassigned = [
+    { id: "CDX-882194", recipient: "Mazen Daher", region: "Beirut", address: "Hamra, Bliss St, Al Noor Bldg", cod: "45", currency: "USD" },
+    { id: "CDX-993021", recipient: "Nour Kassir", region: "Mount Lebanon", address: "Jounieh - Highway", cod: "3,500,000", currency: "LBP" },
+    { id: "CDX-774110", recipient: "Ahmad Traboulsi", region: "North Lebanon", address: "Mina, Tripoli Corniche", cod: "20", currency: "USD" }
+  ];
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Navigation & Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 gap-4 border-b border-slate-200">
-          <div>
-            <Link href="/" className="inline-flex items-center text-xs font-semibold text-slate-500 hover:text-slate-900 mb-2">
-              <ArrowLeft className="w-3.5 h-3.5 mr-1" /> Operations Hub
-            </Link>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-purple-600 text-white flex items-center justify-center">
-                <ShieldAlert className="w-4 h-4" />
+    <div className="min-h-screen bg-slate-50/50 p-4 sm:p-6 lg:p-10 font-sans selection:bg-blue-600 selection:text-white" dir={isRtl ? "rtl" : "ltr"}>
+      <div className="max-w-7xl mx-auto space-y-6">
+        
+        {/* Premium Header Card */}
+        <div className="bg-white rounded-[2rem] p-8 border border-slate-200/80 shadow-sm relative overflow-hidden">
+          <div className="absolute -right-10 -top-10 opacity-[0.03] pointer-events-none">
+            <Truck className="w-64 h-64" />
+          </div>
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+              <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                {t("hubDispatchBoard") || "Hub Dispatch & Assignment"}
+              </h1>
+              <p className="text-sm font-medium text-slate-500 mt-2 max-w-xl">
+                {t("hubDispatchSubtitle") || "Route parcels to drivers based on Lebanese governorates."}
+              </p>
+            </div>
+            
+            {/* Live Stats */}
+            <div className="flex items-center gap-4">
+              <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-4 text-center min-w-[140px] shadow-inner">
+                <p className="text-3xl font-black text-blue-600">{unassigned.length}</p>
+                <p className="text-xs font-bold text-blue-800 uppercase tracking-wider mt-1">
+                  {t("unassignedParcels") || "Unassigned"}
+                </p>
               </div>
-              <h1 className="text-2xl font-bold text-slate-900">Hub Dispatch Board</h1>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3"><Link href="/admin/parcels/print-batch" className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition"><Printer className="w-3.5 h-3.5" /><span>Batch Print Labels</span></Link>
-            <button
-              onClick={loadData}
-              disabled={loading}
-              className="p-2 border border-slate-200 bg-white rounded-lg hover:bg-slate-50 text-slate-600"
-              title="Refresh"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-            </button>
-          </div>
-        </div>
-
-        {message && (
-          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 text-blue-800 text-xs rounded-xl flex items-center gap-2">
-            <Check className="w-4 h-4 text-blue-600" />
-            <span>{message}</span>
-          </div>
-        )}
-
-        {/* Dispatch Controls Bar */}
-        <div className="mt-6 bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          {/* Filter section */}
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <label className="text-xs font-semibold text-slate-600">Governorate:</label>
-            <select
-              value={filterGov}
-              onChange={(e) => setFilterGov(e.target.value)}
-              className="text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 bg-slate-50 font-medium"
-            >
-              {governorates.map((gov) => (
-                <option key={gov} value={gov}>{gov}</option>
-              ))}
-            </select>
-            <span className="text-xs text-slate-400 font-medium">
-              ({filteredParcels.length} pending)
-            </span>
-          </div>
-
-          {/* Action & Assignment Controls */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 w-full lg:w-auto">
-            <select
-              value={selectedDriverId}
-              onChange={(e) => setSelectedDriverId(e.target.value)}
-              className="text-xs border border-slate-200 rounded-lg px-3 py-2 bg-white font-medium w-full sm:w-auto"
-            >
-              {drivers.map((d) => (
-                <option key={d.id} value={d.id}>
-                  🚚 {d.user.name} ({d.vehicleType || "Driver"})
-                </option>
-              ))}
-            </select>
-
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <button
-                onClick={handleAssign}
-                disabled={selectedIds.length === 0 || assigning}
-                className="flex-1 sm:flex-none justify-center px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold flex items-center gap-2 transition disabled:opacity-40"
-              >
-                <Truck className="w-4 h-4" />
-                <span>Assign {selectedIds.length > 0 ? `(${selectedIds.length})` : ""}</span>
-              </button>
-
-              {selectedDriverId && (
-                <Link
-                  href={`/admin/manifest/${selectedDriverId}`}
-                  target="_blank"
-                  className="flex-1 sm:flex-none justify-center px-3 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs transition"
-                  title="View printable route run-sheet"
-                >
-                  <FileText className="w-3.5 h-3.5 text-blue-600" />
-                  <span>Run-Sheet</span>
-                </Link>
-              )}
             </div>
           </div>
         </div>
 
-        {/* Parcels Table */}
-        <div className="mt-6 bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-600">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-700 uppercase font-semibold text-[10px] tracking-wider">
-                <tr>
-                  <th className="p-3 w-10 text-center">
-                    <button
-                      onClick={() => toggleSelectAll(filteredParcels)}
-                      className="text-slate-500 hover:text-slate-800"
-                    >
-                      {selectedIds.length > 0 && selectedIds.length === filteredParcels.length ? (
-                        <CheckSquare className="w-4 h-4 text-blue-600" />
-                      ) : (
-                        <Square className="w-4 h-4" />
-                      )}
-                    </button>
-                  </th>
-                  <th className="p-3">Tracking / Merchant</th>
-                  <th className="p-3">Recipient & City</th>
-                  <th className="p-3">COD Value</th>
-                  <th className="p-3">Status</th>
-                  <th className="p-3">Assigned Driver</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {loading ? (
-                  <tr>
-                    <td colSpan={6} className="text-center py-10 text-slate-400">
-                      Loading pending shipments...
-                    </td>
-                  </tr>
-                ) : filteredParcels.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="text-center py-10 text-slate-400">
-                      <AlertCircle className="w-6 h-6 mx-auto mb-2 text-slate-300" />
-                      No pending parcels found.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredParcels.map((parcel) => {
-                    const isSelected = selectedIds.includes(parcel.id);
-                    return (
-                      <tr
-                        key={parcel.id}
-                        className={`hover:bg-slate-50 transition cursor-pointer ${
-                          isSelected ? "bg-blue-50/50" : ""
-                        }`}
-                        onClick={() => toggleSelect(parcel.id)}
-                      >
-                        <td className="p-3 text-center" onClick={(e) => e.stopPropagation()}>
-                          <button onClick={() => toggleSelect(parcel.id)}>
-                            {isSelected ? (
-                              <CheckSquare className="w-4 h-4 text-blue-600" />
-                            ) : (
-                              <Square className="w-4 h-4 text-slate-300" />
-                            )}
-                          </button>
-                        </td>
-                        <td className="p-3">
-                          <span className="font-mono font-bold text-slate-900">
-                            {parcel.trackingNumber}
-                          </span>
-                          <div className="text-[11px] text-slate-400">
-                            {parcel.merchant.companyName}
-                          </div>
-                        </td>
-                        <td className="p-3">
-                          <div className="font-semibold text-slate-800">{parcel.recipientName}</div>
-                          <div className="text-[11px] text-slate-500">
-                            {parcel.city}, {parcel.governorate}
-                          </div>
-                        </td>
-                        <td className="p-3">
-                          <span className="font-bold text-slate-900">
-                            {parcel.codCurrency === "USD" ? `$${parcel.codAmount}` : `${Number(parcel.codAmount).toLocaleString()} LBP`}
-                          </span>
-                        </td>
-                        <td className="p-3">
-                          <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                            {parcel.status}
-                          </span>
-                        </td>
-                        <td className="p-3 text-slate-500">
-                          {parcel.driver?.user.name ? (
-                            <span className="font-medium text-emerald-700">
-                              🚚 {parcel.driver.user.name}
-                            </span>
-                          ) : (
-                            <span className="text-slate-400 italic">Unassigned</span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+        {/* Search & Filter Toolbar */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+          <div className="relative w-full sm:w-[24rem]">
+            <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 ${isRtl ? 'right-4' : 'left-4'}`} />
+            <input 
+              type="text" 
+              placeholder={t("searchPlaceholder")}
+              className={`w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 text-sm font-medium focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-all placeholder:text-slate-400 ${isRtl ? 'pr-10 pl-4 text-right' : 'pl-10 pr-4 text-left'}`}
+            />
+          </div>
+          
+          <div className="relative w-full sm:w-auto min-w-[200px]">
+            <Filter className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none ${isRtl ? 'right-4' : 'left-4'}`} />
+            <select 
+              className={`w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-600 appearance-none cursor-pointer transition-colors ${isRtl ? 'pr-10 pl-8' : 'pl-10 pr-8'}`}
+            >
+              <option value="ALL">{t("filterByRegion") || "Filter by Region"}</option>
+              <option value="Beirut">{t("reg_beirut")}</option>
+              <option value="Mount Lebanon">{t("reg_mount_lebanon")}</option>
+              <option value="North">{t("reg_north")}</option>
+              <option value="South">{t("reg_south")}</option>
+              <option value="Bekaa">{t("reg_bekaa")}</option>
+            </select>
           </div>
         </div>
+
+        {/* Parcels Dispatch List */}
+        <div className="space-y-4">
+          {unassigned.map((parcel) => (
+            <div key={parcel.id} className="bg-white rounded-[1.5rem] border border-slate-200/80 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 p-5 flex flex-col xl:flex-row xl:items-center justify-between gap-6 group">
+              
+              {/* Parcel Identity */}
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100 shadow-inner group-hover:scale-105 transition-transform">
+                  <Package className="w-5 h-5 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-xs font-black text-slate-800 bg-slate-100 px-2.5 py-1 rounded-md tracking-widest border border-slate-200/50">
+                      {parcel.id}
+                    </span>
+                    <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-100 px-2.5 py-1 rounded-md">
+                      {parcel.region}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-extrabold text-slate-900">{parcel.recipient}</h3>
+                  <div className="flex items-center gap-1.5 mt-1 text-slate-500">
+                    <Map className="w-3.5 h-3.5" />
+                    <p className="text-sm font-medium">{parcel.address}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* COD & Assignment Controls */}
+              <div className="flex flex-col sm:flex-row items-center gap-4 xl:w-auto w-full border-t xl:border-t-0 border-slate-100 pt-4 xl:pt-0">
+                
+                {/* Financials */}
+                <div className={`text-center sm:text-right ${isRtl ? 'sm:text-left' : ''} min-w-[120px]`}>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
+                    {t("codAmount")}
+                  </p>
+                  <p className="text-xl font-black text-emerald-600 tracking-tight">
+                    {parcel.cod} <span className="text-sm font-bold text-emerald-500">{parcel.currency}</span>
+                  </p>
+                </div>
+
+                <div className="h-10 w-px bg-slate-200 hidden sm:block"></div>
+
+                {/* Assignment Dropdown */}
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <select className="flex-1 sm:w-56 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl py-3 px-4 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-600 outline-none cursor-pointer transition-colors shadow-inner">
+                    <option value="">{t("selectDriver") || "Select Driver..."}</option>
+                    <option value="driver1">Ahmad K. (Beirut Route)</option>
+                    <option value="driver2">Hassan M. (North Route)</option>
+                    <option value="driver3">Ali S. (Mount Lebanon)</option>
+                  </select>
+                  
+                  <button className="bg-slate-900 hover:bg-blue-600 text-white p-3 rounded-xl transition-all shadow-md cursor-pointer group-hover:scale-105 duration-200 flex items-center justify-center">
+                    <ArrowRight className={`w-5 h-5 ${isRtl ? 'rotate-180' : ''}`} />
+                  </button>
+                </div>
+              </div>
+              
+            </div>
+          ))}
+        </div>
+
       </div>
     </div>
   );
