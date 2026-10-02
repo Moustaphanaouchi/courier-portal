@@ -1,289 +1,240 @@
-"use client";
+﻿"use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { 
-  Package, 
-  Truck, 
-  Receipt, 
-  ShieldAlert, 
-  ArrowRight, 
-  UploadCloud, 
-  Search, 
+import {
+  Truck,
+  Package,
+  Layers,
+  Search,
+  Receipt,
+  FileSpreadsheet,
   Printer,
-  CheckCircle2,
-  Lock
+  ChevronRight,
+  ShieldCheck,
+  Building2,
+  DollarSign,
+  ArrowRight,
 } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
-interface SessionUser {
-  userId: string;
-  name: string;
-  role: "COURIER_ADMIN" | "DRIVER" | "MERCHANT";
-}
-
-export default function HomePage() {
-  const [user, setUser] = useState<SessionUser | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [trackingCode, setTrackingCode] = useState("");
-
-  useEffect(() => {
-    async function fetchUser() {
-      try {
-        const res = await fetch("/api/auth/me");
-        const data = await res.json();
-        if (data.authenticated && data.user) {
-          setUser(data.user);
-        }
-      } catch {
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchUser();
-  }, []);
+export default function Home() {
+  const { t, isRtl } = useLanguage();
 
   return (
-    <div className="min-h-[calc(100vh-3.5rem)] bg-slate-50 flex flex-col justify-between">
-      <main className="max-w-6xl mx-auto px-4 py-10 w-full flex-1">
-        {/* Banner Section */}
-        <div className="text-center max-w-2xl mx-auto mb-10">
-          <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 mb-3">
-            {user ? `${user.role.replace(/_/g, " ")} WORKSPACE` : "PUBLIC LOGISTICS PLATFORM"}
-          </span>
-          <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
-            {user ? `Welcome back, ${user.name}` : "Lebanese Regional Courier Engine"}
+    <main className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-blue-600 selection:text-white">
+      {/* Top Banner / Hero */}
+      <div className="relative overflow-hidden border-b border-slate-800/80 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.15),rgba(255,255,255,0))]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-14 text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 mb-6">
+            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+            {t("homeBadge")}
+          </div>
+
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-tight">
+            {t("homeHeroTitle")}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-2">
-            Multi-currency USD & LBP cash-on-delivery tracking, hub dispatching, and automated settlements.
+
+          <p className="mt-4 text-sm sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
+            {t("homeHeroSubtitle")}
           </p>
-        </div>
 
-        {/* Public Parcel Quick Search Bar */}
-        <div className="max-w-xl mx-auto mb-10">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (trackingCode.trim()) {
-                window.location.href = `/track/${trackingCode.trim().toUpperCase()}`;
-              }
-            }}
-            className="flex items-center gap-2 p-1.5 bg-white border border-slate-200 rounded-2xl shadow-sm focus-within:ring-2 focus-within:ring-blue-500"
-          >
-            <Search className="w-5 h-5 text-slate-400 ml-3 shrink-0" />
-            <input
-              type="text"
-              placeholder="Track any shipment by waybill (e.g. LB-2026-XXXXXX)..."
-              value={trackingCode}
-              onChange={(e) => setTrackingCode(e.target.value)}
-              className="w-full text-xs sm:text-sm px-2 py-2 outline-none font-mono"
-            />
-            <button
-              type="submit"
-              className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition shrink-0"
-            >
-              Track
-            </button>
-          </form>
-        </div>
-
-        {/* Filtered Grid by Role */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {/* Admin Cards */}
-          {(user?.role === "COURIER_ADMIN" || !user) && (
-            <>
-              <Link
-                href="/admin/dispatch"
-                className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-purple-500 hover:shadow-md transition flex flex-col justify-between group"
-              >
-                <div>
-                  <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-4">
-                    <ShieldAlert className="w-5 h-5" />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-base text-slate-900 group-hover:text-purple-600 transition">
-                      Hub Dispatch Board
-                    </h3>
-                    {!user && <Lock className="w-3.5 h-3.5 text-slate-400" />}
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Assign incoming parcels to drivers by Lebanese governorate and trigger WhatsApp tracking webhooks.
-                  </p>
-                </div>
-                <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-purple-700">
-                  <span>Open Dispatch</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
-                </div>
-              </Link>
-
-              <Link
-                href="/admin/settlements"
-                className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-emerald-500 hover:shadow-md transition flex flex-col justify-between group"
-              >
-                <div>
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
-                    <Receipt className="w-5 h-5" />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-base text-slate-900 group-hover:text-emerald-600 transition">
-                      Cash Settlements
-                    </h3>
-                    {!user && <Lock className="w-3.5 h-3.5 text-slate-400" />}
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Reconcile physical USD and LBP cash handed over by drivers at the hub counter.
-                  </p>
-                </div>
-                <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-emerald-700">
-                  <span>Reconcile Cash</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
-                </div>
-              </Link>
-
-              <Link
-                href="/admin/parcels/print-batch"
-                className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-blue-500 hover:shadow-md transition flex flex-col justify-between group"
-              >
-                <div>
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4">
-                    <Printer className="w-5 h-5" />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-base text-slate-900 group-hover:text-blue-600 transition">
-                      Batch Waybill Printing
-                    </h3>
-                    {!user && <Lock className="w-3.5 h-3.5 text-slate-400" />}
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Continuous 4×6 inch thermal roll printing with scannable barcodes.
-                  </p>
-                </div>
-                <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-blue-700">
-                  <span>Print Labels</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
-                </div>
-              </Link>
-            </>
-          )}
-
-          {/* Driver Cards */}
-          {(user?.role === "DRIVER" || !user) && (
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link
-              href="/driver/run"
-              className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-emerald-500 hover:shadow-md transition flex flex-col justify-between group"
+              href="/track"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm transition shadow-lg shadow-blue-500/20 cursor-pointer"
             >
-              <div>
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
-                  <Truck className="w-5 h-5" />
-                </div>
-                <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-base text-slate-900 group-hover:text-emerald-600 transition">
-                    Driver Mobile Run Sheet
-                  </h3>
-                  {!user && <Lock className="w-3.5 h-3.5 text-slate-400" />}
-                </div>
-                <p className="text-xs text-slate-500 mt-1">
-                  Mobile view with customer calling, WhatsApp routing, camera barcode scanner, and live cash tallies.
-                </p>
-              </div>
-              <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-emerald-700">
-                <span>Start Run</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
-              </div>
+              <Search className="w-4 h-4" />
+              <span>{t("trackBtn")}</span>
             </Link>
-          )}
-
-          {/* Merchant Cards */}
-          {(user?.role === "MERCHANT" || !user) && (
-            <>
-              <Link
-                href="/merchant/parcels/new"
-                className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-blue-500 hover:shadow-md transition flex flex-col justify-between group"
-              >
-                <div>
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4">
-                    <Package className="w-5 h-5" />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-base text-slate-900 group-hover:text-blue-600 transition">
-                      Book Single Parcel
-                    </h3>
-                    {!user && <Lock className="w-3.5 h-3.5 text-slate-400" />}
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Register delivery orders with Lebanese regional governorates and dual USD/LBP COD.
-                  </p>
-                </div>
-                <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-blue-700">
-                  <span>Create Order</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
-                </div>
-              </Link>
-
-              <Link
-                href="/merchant/parcels/import"
-                className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-blue-500 hover:shadow-md transition flex flex-col justify-between group"
-              >
-                <div>
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4">
-                    <UploadCloud className="w-5 h-5" />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-base text-slate-900 group-hover:text-blue-600 transition">
-                      Bulk CSV Manifest Ingestion
-                    </h3>
-                    {!user && <Lock className="w-3.5 h-3.5 text-slate-400" />}
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Upload Shopify/WooCommerce CSV exports to generate dozens of waybills in seconds.
-                  </p>
-                </div>
-                <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-blue-700">
-                  <span>Upload Manifest</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
-                </div>
-              </Link>
-
-              <Link
-                href="/merchant/payouts"
-                className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-emerald-500 hover:shadow-md transition flex flex-col justify-between group"
-              >
-                <div>
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
-                    <Receipt className="w-5 h-5" />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-base text-slate-900 group-hover:text-emerald-600 transition">
-                      Merchant Payout Statements
-                    </h3>
-                    {!user && <Lock className="w-3.5 h-3.5 text-slate-400" />}
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Track gross COD collected, deducted delivery fees, and net payable balances.
-                  </p>
-                </div>
-                <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-emerald-700">
-                  <span>View Statement</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
-                </div>
-              </Link>
-            </>
-          )}
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700/90 text-slate-200 border border-slate-700 font-semibold text-sm transition cursor-pointer"
+            >
+              <span>{t("signIn")}</span>
+              <ChevronRight className={`w-4 h-4 ${isRtl ? "rotate-180" : ""}`} />
+            </Link>
+          </div>
         </div>
-      </main>
+      </div>
 
-      <footer className="border-t border-slate-200 bg-white py-8 text-center text-xs text-slate-500">
-        <div className="flex justify-center items-center gap-6 mb-3 text-xs font-medium text-slate-500">
-          <Link href="/about" className="hover:text-slate-800 transition">About</Link>
-          <span className="text-slate-300">•</span>
-          <Link href="/privacy" className="hover:text-slate-800 transition">Privacy Policy</Link>
-          <span className="text-slate-300">•</span>
-          <Link href="/terms" className="hover:text-slate-800 transition">Terms of Service</Link>
+      {/* Operations Navigation Cards */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex-1 w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {/* Card 1: Hub Dispatch Board */}
+          <Link
+            href="/admin/dispatch"
+            className="group relative flex flex-col justify-between p-6 bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-blue-500/40 rounded-2xl transition duration-200"
+          >
+            <div>
+              <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center mb-4 group-hover:scale-105 transition">
+                <Truck className="w-5 h-5" />
+              </div>
+              <h3 className="text-base font-bold text-white group-hover:text-blue-400 transition">
+                {t("cardDispatchTitle")}
+              </h3>
+              <p className="mt-2 text-xs sm:text-sm text-slate-400 leading-relaxed">
+                {t("cardDispatchDesc")}
+              </p>
+            </div>
+            <div className="mt-6 flex items-center gap-1.5 text-xs font-semibold text-blue-400">
+              <span>{t("cardDispatchBtn")}</span>
+              <ArrowRight className={`w-3.5 h-3.5 transition group-hover:translate-x-1 ${isRtl ? "rotate-180 group-hover:-translate-x-1" : ""}`} />
+            </div>
+          </Link>
+
+          {/* Card 2: Cash Settlements */}
+          <Link
+            href="/admin/settlements"
+            className="group relative flex flex-col justify-between p-6 bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-emerald-500/40 rounded-2xl transition duration-200"
+          >
+            <div>
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center mb-4 group-hover:scale-105 transition">
+                <Receipt className="w-5 h-5" />
+              </div>
+              <h3 className="text-base font-bold text-white group-hover:text-emerald-400 transition">
+                {t("cardSettlementsTitle")}
+              </h3>
+              <p className="mt-2 text-xs sm:text-sm text-slate-400 leading-relaxed">
+                {t("cardSettlementsDesc")}
+              </p>
+            </div>
+            <div className="mt-6 flex items-center gap-1.5 text-xs font-semibold text-emerald-400">
+              <span>{t("cardSettlementsBtn")}</span>
+              <ArrowRight className={`w-3.5 h-3.5 transition group-hover:translate-x-1 ${isRtl ? "rotate-180 group-hover:-translate-x-1" : ""}`} />
+            </div>
+          </Link>
+
+          {/* Card 3: Batch Waybill Printing */}
+          <Link
+            href="/admin/parcels/print-batch"
+            className="group relative flex flex-col justify-between p-6 bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-indigo-500/40 rounded-2xl transition duration-200"
+          >
+            <div>
+              <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center mb-4 group-hover:scale-105 transition">
+                <Printer className="w-5 h-5" />
+              </div>
+              <h3 className="text-base font-bold text-white group-hover:text-indigo-400 transition">
+                {t("cardBatchPrintTitle")}
+              </h3>
+              <p className="mt-2 text-xs sm:text-sm text-slate-400 leading-relaxed">
+                {t("cardBatchPrintDesc")}
+              </p>
+            </div>
+            <div className="mt-6 flex items-center gap-1.5 text-xs font-semibold text-indigo-400">
+              <span>{t("cardBatchPrintBtn")}</span>
+              <ArrowRight className={`w-3.5 h-3.5 transition group-hover:translate-x-1 ${isRtl ? "rotate-180 group-hover:-translate-x-1" : ""}`} />
+            </div>
+          </Link>
+
+          {/* Card 4: Driver Mobile Run Sheet */}
+          <Link
+            href="/driver/run"
+            className="group relative flex flex-col justify-between p-6 bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-purple-500/40 rounded-2xl transition duration-200"
+          >
+            <div>
+              <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center mb-4 group-hover:scale-105 transition">
+                <Layers className="w-5 h-5" />
+              </div>
+              <h3 className="text-base font-bold text-white group-hover:text-purple-400 transition">
+                {t("cardDriverRunTitle")}
+              </h3>
+              <p className="mt-2 text-xs sm:text-sm text-slate-400 leading-relaxed">
+                {t("cardDriverRunDesc")}
+              </p>
+            </div>
+            <div className="mt-6 flex items-center gap-1.5 text-xs font-semibold text-purple-400">
+              <span>{t("cardDriverRunBtn")}</span>
+              <ArrowRight className={`w-3.5 h-3.5 transition group-hover:translate-x-1 ${isRtl ? "rotate-180 group-hover:-translate-x-1" : ""}`} />
+            </div>
+          </Link>
+
+          {/* Card 5: Book Single Parcel */}
+          <Link
+            href="/merchant/parcels/new"
+            className="group relative flex flex-col justify-between p-6 bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/40 rounded-2xl transition duration-200"
+          >
+            <div>
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center mb-4 group-hover:scale-105 transition">
+                <Package className="w-5 h-5" />
+              </div>
+              <h3 className="text-base font-bold text-white group-hover:text-amber-400 transition">
+                {t("cardBookParcelTitle")}
+              </h3>
+              <p className="mt-2 text-xs sm:text-sm text-slate-400 leading-relaxed">
+                {t("cardBookParcelDesc")}
+              </p>
+            </div>
+            <div className="mt-6 flex items-center gap-1.5 text-xs font-semibold text-amber-400">
+              <span>{t("cardBookParcelBtn")}</span>
+              <ArrowRight className={`w-3.5 h-3.5 transition group-hover:translate-x-1 ${isRtl ? "rotate-180 group-hover:-translate-x-1" : ""}`} />
+            </div>
+          </Link>
+
+          {/* Card 6: Bulk CSV Manifest Ingestion */}
+          <Link
+            href="/merchant/parcels/import"
+            className="group relative flex flex-col justify-between p-6 bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-cyan-500/40 rounded-2xl transition duration-200"
+          >
+            <div>
+              <div className="w-10 h-10 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center mb-4 group-hover:scale-105 transition">
+                <FileSpreadsheet className="w-5 h-5" />
+              </div>
+              <h3 className="text-base font-bold text-white group-hover:text-cyan-400 transition">
+                {t("cardBulkCsvTitle")}
+              </h3>
+              <p className="mt-2 text-xs sm:text-sm text-slate-400 leading-relaxed">
+                {t("cardBulkCsvDesc")}
+              </p>
+            </div>
+            <div className="mt-6 flex items-center gap-1.5 text-xs font-semibold text-cyan-400">
+              <span>{t("cardBulkCsvBtn")}</span>
+              <ArrowRight className={`w-3.5 h-3.5 transition group-hover:translate-x-1 ${isRtl ? "rotate-180 group-hover:-translate-x-1" : ""}`} />
+            </div>
+          </Link>
+
+          {/* Card 7: Merchant Payout Statements */}
+          <Link
+            href="/merchant/payouts"
+            className="group relative flex flex-col justify-between p-6 bg-slate-900/60 hover:bg-slate-900 border border-slate-800 hover:border-emerald-500/40 rounded-2xl transition duration-200 lg:col-span-3"
+          >
+            <div>
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center mb-4 group-hover:scale-105 transition">
+                <DollarSign className="w-5 h-5" />
+              </div>
+              <h3 className="text-base font-bold text-white group-hover:text-emerald-400 transition">
+                {t("cardMerchantPayoutTitle")}
+              </h3>
+              <p className="mt-2 text-xs sm:text-sm text-slate-400 leading-relaxed">
+                {t("cardMerchantPayoutDesc")}
+              </p>
+            </div>
+            <div className="mt-6 flex items-center gap-1.5 text-xs font-semibold text-emerald-400">
+              <span>{t("cardMerchantPayoutBtn")}</span>
+              <ArrowRight className={`w-3.5 h-3.5 transition group-hover:translate-x-1 ${isRtl ? "rotate-180 group-hover:-translate-x-1" : ""}`} />
+            </div>
+          </Link>
         </div>
-        <p className="text-[11px] text-slate-400">
-          Courier & Logistics Management System • Multi-Tenant RBAC Isolation Enforced
+      </div>
+
+      {/* Footer */}
+      <footer className="border-t border-slate-800/80 bg-slate-950 py-8 px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500 space-y-3">
+        <div className="flex items-center justify-center gap-4 text-xs font-medium text-slate-400">
+          <Link href="/about" className="hover:text-slate-200 transition">
+            {t("footerAbout")}
+          </Link>
+          <span>•</span>
+          <Link href="/privacy" className="hover:text-slate-200 transition">
+            {t("footerPrivacy")}
+          </Link>
+          <span>•</span>
+          <Link href="/terms" className="hover:text-slate-200 transition">
+            {t("footerTerms")}
+          </Link>
+        </div>
+        <p className="text-[11px] text-slate-600">
+          {t("footerSecurityNotice")}
         </p>
       </footer>
-    </div>
+    </main>
   );
 }

@@ -37,6 +37,54 @@ export const translations = {
     activeRunSheet: "Active Run-Sheet",
     tripHistory: "Trip History",
 
+    // Homepage Landing & Portals
+    homeBadge: "PUBLIC LOGISTICS PLATFORM",
+    homeHeroTitle: "Lebanese Regional Courier Engine",
+    homeHeroSubtitle: "Multi-currency USD & LBP cash-on-delivery tracking, hub dispatching, and automated settlements.",
+    trackBtn: "Track",
+    signIn: "Sign In",
+
+    // Hub Dispatch Board Card
+    cardDispatchTitle: "Hub Dispatch Board",
+    cardDispatchDesc: "Assign incoming parcels to drivers by Lebanese governorate and trigger WhatsApp tracking webhooks.",
+    cardDispatchBtn: "Open Dispatch",
+
+    // Cash Settlements Card
+    cardSettlementsTitle: "Cash Settlements",
+    cardSettlementsDesc: "Reconcile physical USD and LBP cash handed over by drivers at the hub counter.",
+    cardSettlementsBtn: "Reconcile Cash",
+
+    // Batch Waybill Printing Card
+    cardBatchPrintTitle: "Batch Waybill Printing",
+    cardBatchPrintDesc: "Continuous 4×6 inch thermal roll printing with scannable barcodes.",
+    cardBatchPrintBtn: "Print Labels",
+
+    // Driver Mobile Run Sheet Card
+    cardDriverRunTitle: "Driver Mobile Run Sheet",
+    cardDriverRunDesc: "Mobile view with customer calling, WhatsApp routing, camera barcode scanner, and live cash tallies.",
+    cardDriverRunBtn: "Start Run",
+
+    // Book Single Parcel Card
+    cardBookParcelTitle: "Book Single Parcel",
+    cardBookParcelDesc: "Register delivery orders with Lebanese regional governorates and dual USD/LBP COD.",
+    cardBookParcelBtn: "Create Order",
+
+    // Bulk CSV Manifest Card
+    cardBulkCsvTitle: "Bulk CSV Manifest Ingestion",
+    cardBulkCsvDesc: "Upload Shopify/WooCommerce CSV exports to generate dozens of waybills in seconds.",
+    cardBulkCsvBtn: "Upload Manifest",
+
+    // Merchant Payout Statements Card
+    cardMerchantPayoutTitle: "Merchant Payout Statements",
+    cardMerchantPayoutDesc: "Track gross COD collected, deducted delivery fees, and net payable balances.",
+    cardMerchantPayoutBtn: "View Statement",
+
+    // Footer Links
+    footerAbout: "About",
+    footerPrivacy: "Privacy Policy",
+    footerTerms: "Terms of Service",
+    footerSecurityNotice: "Courier & Logistics Management System • Multi-Tenant RBAC Isolation Enforced",
+
     // Bulk Upload
     bulkUploadTitle: "Bulk Parcel Import (CSV)",
     bulkUploadSubtitle: "Upload batches of delivery waybills with address & COD parsing",
@@ -170,6 +218,54 @@ export const translations = {
     // Driver Nav
     activeRunSheet: "قائمة التوصيل الحالية",
     tripHistory: "سجل الرحلات المكتملة",
+
+    // Homepage Landing & Portals
+    homeBadge: "منصة الخدمات اللوجستية العامة",
+    homeHeroTitle: "محرك التوصيل للمحافظات اللبنانية",
+    homeHeroSubtitle: "تتبع مبالغ الدفع عند الاستلام بالدولار والليرة اللبنانية، إدارة توزيع الشحنات، والتسويات المالية الفورية.",
+    trackBtn: "تتبع شحنتك",
+    signIn: "تسجيل الدخول",
+
+    // Hub Dispatch Board Card
+    cardDispatchTitle: "لوحة توزيع الشحنات والرحلات",
+    cardDispatchDesc: "توزيع الطرود الواردة على السائقين حسب المحافظات اللبنانية وإرسال روابط التتبع عبر واتساب.",
+    cardDispatchBtn: "فتح التوزيع",
+
+    // Cash Settlements Card
+    cardSettlementsTitle: "تسوية التحصيل النقدي (COD)",
+    cardSettlementsDesc: "مطابقة وتسليم الأموال النقدية بالدولار والليرة اللبنانية المستلمة من السائقين في المركز.",
+    cardSettlementsBtn: "تسوية المبالغ",
+
+    // Batch Waybill Printing Card
+    cardBatchPrintTitle: "طباعة البوالص دفعة واحدة",
+    cardBatchPrintDesc: "طباعة متواصلة على ورق الملصقات الحراري مقاس 4×6 إنش مع باركود قابل للمسح السريع.",
+    cardBatchPrintBtn: "طباعة الملصقات",
+
+    // Driver Mobile Run Sheet Card
+    cardDriverRunTitle: "جدول توصيل السائق عبر الهاتف",
+    cardDriverRunDesc: "واجهة مخصصة للهاتف تتيح الاتصال المباشر بالزبون، فتح واتساب، مسح الباركود بالكاميرا، وحساب المبالغ المستلمة.",
+    cardDriverRunBtn: "بدء التوصيل",
+
+    // Book Single Parcel Card
+    cardBookParcelTitle: "تسجيل طرد مفرد",
+    cardBookParcelDesc: "إنشاء طلب توصيل جديد لجميع المحافظات مع مبالغ الدفع عند الاستلام بالدولار والليرة.",
+    cardBookParcelBtn: "إنشاء الطلب",
+
+    // Bulk CSV Manifest Card
+    cardBulkCsvTitle: "استيراد الشحنات بالجملة (CSV)",
+    cardBulkCsvDesc: "رفع ملفات إكسل وCSV المصدرة من شوبيفاي أو ووكومرس لإنشاء عشرات البوالص بثوانٍ.",
+    cardBulkCsvBtn: "رفع الملف",
+
+    // Merchant Payout Statements Card
+    cardMerchantPayoutTitle: "كشوفات مستحقات التجار",
+    cardMerchantPayoutDesc: "متابعة إجمالي مبالغ التحصيل المستلمة، أجور التوصيل المقتطعة، وصافي الأرصدة المستحقة للدفع.",
+    cardMerchantPayoutBtn: "عرض الكشف",
+
+    // Footer Links
+    footerAbout: "عن المنصة",
+    footerPrivacy: "سياسة الخصوصية",
+    footerTerms: "شروط الخدمة",
+    footerSecurityNotice: "نظام إدارة الشحن والخدمات اللوجستية • حماية عزل البيانات وتعدد الصلاحيات مفعلة",
 
     // Bulk Upload
     bulkUploadTitle: "استيراد الشحنات بالجملة (ملف CSV)",
