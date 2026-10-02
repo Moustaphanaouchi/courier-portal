@@ -26,7 +26,7 @@ export default function TrackSearchPage() {
         </div>
 
         <h1 className="text-xl font-bold text-center text-white">
-          {t("trackParcel")}
+          {lang === "ar" ? "تتبع الشحنة" : "Track Your Parcel"}
         </h1>
         <p className="text-center text-slate-400 text-xs mt-1">
           {lang === "ar"

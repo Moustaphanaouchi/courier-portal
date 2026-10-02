@@ -213,7 +213,7 @@ return (
             <span>{lang === "ar" ? "طباعة البوليصة الحرارية" : "Print 4x6 Waybill"}</span>
           </button>
 
-          <WhatsAppReceiptButton parcel={createdParcel} />
+          <WhatsAppReceiptButton phone={createdParcel.recipientPhone} parcel={createdParcel} />
 
           <button
             onClick={() => {
