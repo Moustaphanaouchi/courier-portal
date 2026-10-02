@@ -48,6 +48,11 @@ export const translations = {
     registerMerchantPrompt: "Running an e-commerce business?",
     registerAsMerchant: "Register as Merchant",
     loginErrorDefault: "Invalid credentials or login failed",
+    loginHeader: "Sign in to your account",
+    demoAccountsTitle: "Quick Fill Demo Accounts",
+    adminDemo: "Hub Admin",
+    merchantDemo: "Merchant",
+    driverDemo: "Driver",
 
     // Homepage Landing & Portals
     homeBadge: "PUBLIC LOGISTICS PLATFORM",
@@ -261,6 +266,11 @@ export const translations = {
     registerMerchantPrompt: "تدير متجراً إلكترونياً وترغب بالشحن معنا؟",
     registerAsMerchant: "سجّل كتاجر جديد",
     loginErrorDefault: "بيانات الدخول غير صحيحة أو فشل الاتصال",
+    loginHeader: "تسجيل الدخول إلى حسابك",
+    demoAccountsTitle: "حسابات تجريبية سريعة",
+    adminDemo: "مدير المركز",
+    merchantDemo: "تاجر",
+    driverDemo: "سائق",
 
     // Homepage Landing & Portals
     homeBadge: "منصة الخدمات اللوجستية العامة",
