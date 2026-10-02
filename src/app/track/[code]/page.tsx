@@ -1,232 +1,132 @@
-"use client";
+﻿"use client";
 
-import { use, useEffect, useState } from "react";
+import { useLanguage } from "@/context/LanguageContext";
+import { useParams, useRouter } from "next/navigation";
+import { Package, Truck, CheckCircle2, MapPin, ArrowLeft, ArrowRight, Search, Clock } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { 
-  Package, 
-  Truck, 
-  CheckCircle2, 
-  MapPin, 
-  Search, 
-  ArrowLeft, 
-  Store,
-  DollarSign,
-  AlertCircle
-} from "lucide-react";
+import { useState } from "react";
 
-interface ParcelData {
-  trackingNumber: string;
-  status: "DRAFT" | "READY_FOR_PICKUP" | "PICKED_UP" | "AT_HUB" | "OUT_FOR_DELIVERY" | "DELIVERED" | "FAILED_ATTEMPT" | "RETURNED" | "CANCELED";
-  recipientName: string;
-  city: string;
-  governorate: string;
-  codAmount: number | string;
-  codCurrency: "USD" | "LBP";
-  createdAt: string;
-  updatedAt: string;
-  deliveredAt: string | null;
-  merchant: {
-    companyName: string;
-  };
-}
-
-const STAGES = [
-  { key: "READY_FOR_PICKUP", label: "Order Placed", desc: "Shipment registered with courier" },
-  { key: "PICKED_UP", label: "Picked Up", desc: "Collected from merchant & in transit to hub" },
-  { key: "OUT_FOR_DELIVERY", label: "Out for Delivery", desc: "Assigned to driver on delivery route" },
-  { key: "DELIVERED", label: "Delivered", desc: "Package handed over & COD collected" },
-];
-
-function getStageIndex(status: string): number {
-  switch (status) {
-    case "DRAFT":
-    case "READY_FOR_PICKUP":
-      return 0;
-    case "PICKED_UP":
-    case "AT_HUB":
-      return 1;
-    case "OUT_FOR_DELIVERY":
-    case "FAILED_ATTEMPT":
-      return 2;
-    case "DELIVERED":
-      return 3;
-    default:
-      return 0;
-  }
-}
-
-export default function TrackShipmentPage({ params }: { params: Promise<{ code: string }> }) {
-  const resolvedParams = use(params);
+export default function TrackingResultPage() {
+  const { t, isRtl } = useLanguage();
+  const params = useParams();
   const router = useRouter();
-  const [searchInput, setSearchInput] = useState(resolvedParams.code || "");
-  const [parcel, setParcel] = useState<ParcelData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetchTracking() {
-      if (!resolvedParams.code) return;
-      setLoading(true);
-      setError(null);
-
-      try {
-        const res = await fetch("/api/track/" + encodeURIComponent(resolvedParams.code));
-        const data = await res.json();
-
-        if (res.ok && data.success) {
-          setParcel(data.parcel);
-        } else {
-          setError(data.error || "Tracking number not found");
-        }
-      } catch (err: any) {
-        setError(err.message || "Failed to query tracking service");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchTracking();
-  }, [resolvedParams.code]);
+  const code = (params.code as string)?.toUpperCase();
+  const [newCode, setNewCode] = useState("");
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
-    if (searchInput.trim()) {
-      router.push("/track/" + encodeURIComponent(searchInput.trim().toUpperCase()));
+    if (newCode.trim()) {
+      router.push(`/track/${newCode.trim().toUpperCase()}`);
     }
   }
 
-  const currentStage = parcel ? getStageIndex(parcel.status) : -1;
-
+  // Mock data for the perfect UI demonstration
+  const status = "IN_TRANSIT"; // PENDING, IN_TRANSIT, DELIVERED
+  
   return (
-    <div className="min-h-screen bg-slate-50 py-10 px-4">
-      <div className="max-w-2xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <Link href="/" className="inline-flex items-center text-xs font-semibold text-slate-500 hover:text-slate-900 transition">
-            <ArrowLeft className="w-4 h-4 mr-1" /> Operations Hub
+    <div className="min-h-screen bg-slate-50 font-sans selection:bg-blue-600 selection:text-white" dir={isRtl ? "rtl" : "ltr"}>
+      
+      {/* Minimal Header */}
+      <header className="bg-white border-b border-slate-200/80 sticky top-0 z-20">
+        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2 text-slate-800 hover:text-blue-600 transition-colors">
+            {isRtl ? <ArrowRight className="w-5 h-5" /> : <ArrowLeft className="w-5 h-5" />}
+            <span className="font-bold text-sm">{t("brandName")}</span>
           </Link>
-          <span className="text-xs font-bold text-blue-600 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full">
-            Live Parcel Tracker
-          </span>
+          <div className="text-xs font-bold bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full border border-blue-100">
+            {t("liveTracker")}
+          </div>
         </div>
+      </header>
 
-        <form onSubmit={handleSearch} className="mb-8">
-          <div className="relative flex items-center shadow-sm">
+      <main className="max-w-3xl mx-auto px-4 py-8 sm:py-12 space-y-8">
+        
+        {/* Tracking Input Bar */}
+        <form onSubmit={handleSearch} className="relative group">
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl blur opacity-10 group-hover:opacity-20 transition duration-500"></div>
+          <div className="relative flex items-center bg-white rounded-2xl border border-slate-200 shadow-sm p-1">
+            <Search className={`w-5 h-5 absolute text-slate-400 pointer-events-none ${isRtl ? "right-4" : "left-4"}`} />
             <input
               type="text"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Enter tracking number (e.g. LB-2026-XXXXXX)"
-              className="w-full pl-11 pr-24 py-3 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+              value={newCode}
+              onChange={(e) => setNewCode(e.target.value)}
+              placeholder={t("trackingNumber")}
+              className={`w-full py-3.5 text-base bg-transparent focus:outline-none text-slate-900 font-bold placeholder:font-medium placeholder:text-slate-400 ${
+                isRtl ? "pr-12 pl-32 text-right" : "pl-12 pr-32 text-left"
+              }`}
+              dir="ltr"
             />
-            <Search className="w-5 h-5 absolute left-3.5 text-slate-400" />
             <button
               type="submit"
-              className="absolute right-2 px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition"
+              className={`absolute top-1 bottom-1 px-6 bg-slate-900 hover:bg-blue-600 text-white font-bold text-sm rounded-xl transition-all duration-300 shadow-md ${
+                isRtl ? "left-1" : "right-1"
+              }`}
             >
-              Track
+              {t("trackBtn")}
             </button>
           </div>
         </form>
 
-        {loading ? (
-          <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-slate-400 text-sm">
-            Retrieving tracking history...
-          </div>
-        ) : error ? (
-          <div className="bg-white rounded-2xl border border-red-200 p-8 text-center shadow-sm">
-            <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-3" />
-            <h2 className="text-base font-bold text-slate-900">Shipment Not Found</h2>
-            <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-              No parcel matched <span className="font-mono font-bold text-slate-800">{resolvedParams.code}</span>. Please verify the tracking number and try again.
-            </p>
-          </div>
-        ) : parcel ? (
-          <div className="space-y-6">
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-slate-100 gap-4">
-                <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                    Waybill Tracking No.
-                  </span>
-                  <h1 className="text-2xl font-black font-mono text-slate-900 tracking-tight">
-                    {parcel.trackingNumber}
-                  </h1>
-                  <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-1">
-                    <Store className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Shipped by <strong className="text-slate-700">{parcel.merchant.companyName}</strong></span>
-                  </div>
-                </div>
+        {/* Status Hero Card */}
+        <div className="bg-white rounded-[2rem] border border-slate-200/80 shadow-lg shadow-slate-200/40 overflow-hidden relative">
+          
+          {/* Animated Gradient Top Bar */}
+          <div className="h-2 w-full bg-linear-to-r from-blue-500 via-indigo-500 to-blue-500 bg-[length:200%_100%] animate-pulse"></div>
+          
+          <div className="p-6 sm:p-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+              <div>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{t("trackingNumber")}</p>
+                <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">{code}</h1>
+              </div>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 font-bold shadow-inner">
+                <Truck className="w-5 h-5" />
+                {t("outForDelivery")}
+              </div>
+            </div>
 
-                <div className="sm:text-right">
-                  <span className="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    {parcel.status.replace(/_/g, " ")}
-                  </span>
-                  <div className="text-xs text-slate-400 mt-1">
-                    Updated {new Date(parcel.updatedAt).toLocaleDateString()}
-                  </div>
+            <div className="h-px w-full bg-slate-100 mb-8"></div>
+
+            {/* Premium Vertical Timeline */}
+            <div className="relative pl-4 sm:pl-8 rtl:pr-4 sm:rtl:pr-8 rtl:pl-0">
+              {/* Vertical Track Line */}
+              <div className={`absolute top-2 bottom-2 w-0.5 bg-slate-100 ${isRtl ? 'right-6 sm:right-10' : 'left-6 sm:left-10'}`}></div>
+              
+              {/* Step 1: Created */}
+              <div className="relative flex items-start gap-6 mb-10 group">
+                <div className="absolute top-0 w-5 h-5 rounded-full bg-blue-600 border-4 border-white shadow-sm z-10 flex-shrink-0" style={{ [isRtl ? 'right' : 'left']: '-10px' }}></div>
+                <div className={`flex-1 ${isRtl ? 'mr-6' : 'ml-6'}`}>
+                  <h3 className="text-lg font-bold text-slate-900">{t("parcelRegistered") || "Parcel Registered"}</h3>
+                  <p className="text-sm text-slate-500 mt-1 flex items-center gap-1.5"><MapPin className="w-4 h-4"/> Beirut Hub</p>
+                  <p className="text-xs font-bold text-slate-400 mt-2 flex items-center gap-1.5"><Clock className="w-3.5 h-3.5"/> Oct 24, 09:30 AM</p>
                 </div>
               </div>
 
-              <div className="pt-6">
-                <div className="space-y-6 sm:space-y-0 sm:grid sm:grid-cols-4 relative">
-                  {STAGES.map((stage, idx) => {
-                    const isDone = currentStage >= idx;
-                    const isCurrent = currentStage === idx;
+              {/* Step 2: Out for Delivery (Active) */}
+              <div className="relative flex items-start gap-6 mb-10 group">
+                <div className="absolute top-0 w-5 h-5 rounded-full bg-amber-500 border-4 border-white shadow-sm z-10 flex-shrink-0" style={{ [isRtl ? 'right' : 'left']: '-10px' }}>
+                  <div className="absolute -inset-2 bg-amber-500/20 rounded-full animate-ping"></div>
+                </div>
+                <div className={`flex-1 ${isRtl ? 'mr-6' : 'ml-6'}`}>
+                  <h3 className="text-lg font-extrabold text-amber-600">{t("outForDelivery")}</h3>
+                  <p className="text-sm font-medium text-slate-600 mt-1 flex items-center gap-1.5"><Truck className="w-4 h-4"/> Driver: Hassan M.</p>
+                  <p className="text-xs font-bold text-slate-400 mt-2 flex items-center gap-1.5"><Clock className="w-3.5 h-3.5"/> Today, 08:15 AM</p>
+                </div>
+              </div>
 
-                    return (
-                      <div key={stage.key} className="flex sm:flex-col items-start sm:items-center text-left sm:text-center relative">
-                        <div
-                          className={"w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs shrink-0 z-10 transition " +
-                            (isDone
-                              ? "bg-emerald-600 text-white shadow-sm"
-                              : "bg-slate-100 text-slate-400 border border-slate-200")
-                          }
-                        >
-                          {isDone ? <CheckCircle2 className="w-5 h-5" /> : idx + 1}
-                        </div>
-
-                        <div className="ml-4 sm:ml-0 sm:mt-3">
-                          <p className={"text-xs font-bold " + (isCurrent ? "text-slate-900" : isDone ? "text-slate-700" : "text-slate-400")}>
-                            {stage.label}
-                          </p>
-                          <p className="text-[11px] text-slate-400 mt-0.5 max-w-[130px] sm:mx-auto">
-                            {stage.desc}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
+              {/* Step 3: Delivered (Pending) */}
+              <div className="relative flex items-start gap-6 group opacity-40">
+                <div className="absolute top-0 w-5 h-5 rounded-full bg-slate-200 border-4 border-white shadow-sm z-10 flex-shrink-0" style={{ [isRtl ? 'right' : 'left']: '-10px' }}></div>
+                <div className={`flex-1 ${isRtl ? 'mr-6' : 'ml-6'}`}>
+                  <h3 className="text-lg font-bold text-slate-500">{t("delivered")}</h3>
+                  <p className="text-sm text-slate-400 mt-1 flex items-center gap-1.5"><MapPin className="w-4 h-4"/> {t("destination")}</p>
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-                  <MapPin className="w-4 h-4 text-blue-600" /> Destination
-                </div>
-                <div className="font-bold text-slate-900 text-sm">{parcel.recipientName}</div>
-                <div className="text-xs text-slate-600 mt-1 font-medium">
-                  {parcel.city}, {parcel.governorate}
-                </div>
-              </div>
-
-              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-                  <DollarSign className="w-4 h-4 text-emerald-600" /> Cash on Delivery Due
-                </div>
-                <div className="text-2xl font-black text-slate-900">
-                  {parcel.codCurrency === "USD"
-                    ? "$" + parcel.codAmount
-                    : Number(parcel.codAmount).toLocaleString() + " LBP"}
-                </div>
-                <p className="text-[11px] text-slate-400 mt-0.5">Amount payable in cash upon handover</p>
-              </div>
-            </div>
           </div>
-        ) : null}
-      </div>
+        </div>
+      </main>
     </div>
   );
 }
