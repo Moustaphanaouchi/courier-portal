@@ -1,9 +1,20 @@
-"use client";
+﻿"use client";
 
 import { WhatsAppReceiptButton } from "@/components/WhatsAppReceiptButton";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { PackagePlus, CheckCircle2, ArrowLeft, Loader2, DollarSign, MapPin, Phone, User } from "lucide-react";
+import {
+  PackagePlus,
+  CheckCircle2,
+  ArrowLeft,
+  Loader2,
+  DollarSign,
+  MapPin,
+  Phone,
+  User,
+  Calculator,
+  Sparkles
+} from "lucide-react";
 import Link from "next/link";
 
 const LEBANON_REGIONS: Record<string, string[]> = {
@@ -14,6 +25,18 @@ const LEBANON_REGIONS: Record<string, string[]> = {
   "Bekaa": ["Zahle", "Chtaura", "Baalbek", "West Bekaa"],
   "Nabatieh": ["Nabatieh El Tahta", "Marjayoun", "Bint Jbeil", "Hasbaya"]
 };
+
+// Standard Lebanese logistics regional tariff matrix (USD)
+const REGIONAL_TARIFFS: Record<string, number> = {
+  "Beirut": 3.0,
+  "Mount Lebanon": 4.0,
+  "North": 4.5,
+  "South": 4.5,
+  "Bekaa": 5.0,
+  "Nabatieh": 5.0
+};
+
+const LBP_RATE = 89500;
 
 export default function NewParcelPage() {
   const router = useRouter();
@@ -33,7 +56,7 @@ export default function NewParcelPage() {
   const [landmark, setLandmark] = useState("");
   const [codAmount, setCodAmount] = useState<number>(25);
   const [codCurrency, setCodCurrency] = useState<"USD" | "LBP">("USD");
-  const [deliveryFee, setDeliveryFee] = useState<number>(3.5);
+  const [deliveryFee, setDeliveryFee] = useState<number>(REGIONAL_TARIFFS["Beirut"] || 3.0);
   const [notes, setNotes] = useState("");
 
   useEffect(() => {
@@ -55,11 +78,18 @@ export default function NewParcelPage() {
     fetchUser();
   }, [router]);
 
-  // Adjust city options when governorate changes
+  // Adjust city and auto-suggest tariff when governorate changes
   const handleGovernorateChange = (gov: string) => {
     setGovernorate(gov);
     setCity(LEBANON_REGIONS[gov]?.[0] || "");
+    if (REGIONAL_TARIFFS[gov]) {
+      setDeliveryFee(REGIONAL_TARIFFS[gov]);
+    }
   };
+
+  // Financial estimations
+  const feeInCurrency = codCurrency === "USD" ? deliveryFee : deliveryFee * LBP_RATE;
+  const netMerchantCOD = Math.max(0, codAmount - feeInCurrency);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -122,33 +152,30 @@ export default function NewParcelPage() {
           </div>
 
           <div className="mt-6 flex flex-col gap-2.5">
-              
-              {/* Direct Printable Waybill Link */}
-              <a
-                href={`/parcels/${successCode}/label`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-2.5 bg-slate-900 hover:bg-black text-white rounded-xl font-semibold text-sm transition flex items-center justify-center gap-2 shadow-sm"
-              >
-                <span>🖨️ Print Waybill / Thermal Label</span>
-              </a>
+            <a
+              href={`/parcels/${successCode}/label`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full py-2.5 bg-slate-900 hover:bg-black text-white rounded-xl font-semibold text-sm transition flex items-center justify-center gap-2 shadow-sm"
+            >
+              <span>🖨️ Print Waybill / Thermal Label</span>
+            </a>
 
-{/* WhatsApp Verification Actions */}
-              <div className="flex flex-col gap-2 mb-2">
-                <WhatsAppReceiptButton
-                  phone={recipientPhone}
-                  parcel={{
-                    trackingNumber: successCode,
-                    recipientName,
-                    recipientPhone,
-                    city,
-                    codAmount,
-                    codCurrency,
-                    notes: (typeof notes !== "undefined" ? notes : "") || undefined,
-                  }}
-                  label="Send Receipt to Customer via WhatsApp"
-                />
-              </div>
+            <div className="flex flex-col gap-2 mb-2">
+              <WhatsAppReceiptButton
+                phone={recipientPhone}
+                parcel={{
+                  trackingNumber: successCode,
+                  recipientName,
+                  recipientPhone,
+                  city,
+                  codAmount,
+                  codCurrency,
+                  notes: (typeof notes !== "undefined" ? notes : "") || undefined,
+                }}
+                label="Send Receipt to Customer via WhatsApp"
+              />
+            </div>
             <button
               onClick={() => {
                 setSuccessCode(null);
@@ -161,10 +188,10 @@ export default function NewParcelPage() {
               Add Another Parcel
             </button>
             <Link
-              href="/"
+              href="/merchant/parcels"
               className="w-full py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg font-semibold text-sm transition text-center"
             >
-              Back to Operations Hub
+              View All Parcels
             </Link>
           </div>
         </div>
@@ -176,8 +203,8 @@ export default function NewParcelPage() {
     <div className="min-h-screen bg-slate-50 py-10 px-4">
       <div className="max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <Link href="/" className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-800 transition">
-            <ArrowLeft className="w-4 h-4 mr-1" /> Back to Dashboard
+          <Link href="/merchant/parcels" className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-800 transition">
+            <ArrowLeft className="w-4 h-4 mr-1" /> Back to Parcels
           </Link>
           <span className="text-xs bg-blue-50 text-blue-700 font-semibold px-2.5 py-1 rounded-full border border-blue-200">
             Merchant Parcel Entry
@@ -191,7 +218,7 @@ export default function NewParcelPage() {
             </div>
             <div>
               <h1 className="text-xl font-bold text-slate-900">Create New Delivery Order</h1>
-              <p className="text-xs text-slate-500">Generate waybill with Lebanese regional routing & COD</p>
+              <p className="text-xs text-slate-500">Automated Lebanese regional tariffs & net COD reconciliation</p>
             </div>
           </div>
 
@@ -246,11 +273,17 @@ export default function NewParcelPage() {
               </div>
             </div>
 
-            {/* Destination Address */}
+            {/* Destination Address & Tariff Routing */}
             <div className="pt-4 border-t border-slate-100">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5" /> Destination Details
-              </h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5" /> Destination Details & Tariff Routing
+                </h3>
+                <span className="text-[11px] font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <Sparkles className="w-3 h-3" /> Auto Tariff Active
+                </span>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">Governorate *</label>
@@ -260,7 +293,9 @@ export default function NewParcelPage() {
                     className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     {Object.keys(LEBANON_REGIONS).map((gov) => (
-                      <option key={gov} value={gov}>{gov}</option>
+                      <option key={gov} value={gov}>
+                        {gov} ({REGIONAL_TARIFFS[gov] ? `$${REGIONAL_TARIFFS[gov].toFixed(2)}` : "Standard"})
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -303,11 +338,11 @@ export default function NewParcelPage() {
             {/* Cash on Delivery (COD) & Rates */}
             <div className="pt-4 border-t border-slate-100">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
-                <DollarSign className="w-3.5 h-3.5" /> Cash On Delivery (COD) & Fees
+                <DollarSign className="w-3.5 h-3.5" /> Cash On Delivery (COD) & Delivery Fee
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">COD Amount *</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">COD Amount to Collect *</label>
                   <input
                     type="number"
                     step="0.01"
@@ -319,7 +354,7 @@ export default function NewParcelPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Currency *</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Collection Currency *</label>
                   <select
                     value={codCurrency}
                     onChange={(e) => setCodCurrency(e.target.value as "USD" | "LBP")}
@@ -330,26 +365,58 @@ export default function NewParcelPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Delivery Fee (USD) *</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Delivery Tariff (USD) *
+                  </label>
                   <input
                     type="number"
-                    step="0.5"
+                    step="0.25"
                     min="0"
                     required
                     value={deliveryFee}
                     onChange={(e) => setDeliveryFee(parseFloat(e.target.value) || 0)}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-slate-800"
                   />
+                  <span className="text-[10px] text-slate-400 mt-0.5 block">
+                    Zone base: ${REGIONAL_TARIFFS[governorate]?.toFixed(2) || "3.00"} (editable)
+                  </span>
+                </div>
+              </div>
+
+              {/* Net Settlement Breakdown Card */}
+              <div className="mt-4 p-4 rounded-xl bg-slate-900 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-slate-800">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                    <Calculator className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-400">Merchant Net COD Remittance</div>
+                    <div className="text-xs text-slate-400">
+                      {codCurrency === "USD"
+                        ? `$${codAmount.toFixed(2)} - $${deliveryFee.toFixed(2)} fee`
+                        : `${codAmount.toLocaleString()} LBP - ${(deliveryFee * LBP_RATE).toLocaleString()} LBP fee`}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-left sm:text-right">
+                  <div className="text-lg font-black text-emerald-400">
+                    {codCurrency === "USD"
+                      ? `$${netMerchantCOD.toFixed(2)} USD`
+                      : `${netMerchantCOD.toLocaleString()} LBP`}
+                  </div>
+                  <div className="text-[10px] text-slate-400 font-medium">
+                    Expected Payout Upon Delivery
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Special Instructions */}
             <div className="pt-4 border-t border-slate-100">
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Delivery Notes / Package Contents</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Delivery Notes / Special Instructions</label>
               <textarea
                 rows={2}
-                placeholder="e.g. Fragile glass bottles. Call before arriving."
+                placeholder="e.g. Call customer before dispatch. Fragile items."
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -366,7 +433,7 @@ export default function NewParcelPage() {
               ) : (
                 <>
                   <PackagePlus className="w-5 h-5" />
-                  <span>Register Parcel & Generate Tracking Code</span>
+                  <span>Register Parcel & Generate Waybill</span>
                 </>
               )}
             </button>
