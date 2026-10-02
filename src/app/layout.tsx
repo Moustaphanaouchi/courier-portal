@@ -1,13 +1,14 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import RoleNavbar from "@/components/RoleNavbar";
+import { LanguageProvider } from "@/context/LanguageContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Courier Portal | Lebanese Regional Logistics",
-  description: "B2B Courier, Hub Dispatching & Dual Currency USD/LBP COD Engine",
+  title: "Cedex Logistics | Lebanese Regional Courier & COD Engine",
+  description: "Fast, reliable parcel delivery, live tracking, and COD collection across Lebanon.",
 };
 
 export default function RootLayout({
@@ -18,8 +19,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} min-h-screen bg-slate-50 text-slate-900 antialiased`}>
-        <RoleNavbar />
-        {children}
+        <LanguageProvider>
+          <RoleNavbar />
+          {children}
+        </LanguageProvider>
       </body>
     </html>
   );

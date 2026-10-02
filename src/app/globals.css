@@ -1,3 +1,12 @@
 ﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Arabic typography & RTL smoothing */
+[dir="rtl"] {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Arabic", "Cairo", sans-serif;
+}
+
+[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
+}

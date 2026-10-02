@@ -9,14 +9,13 @@ import {
   ShieldAlert,
   Receipt,
   LogOut,
-  User,
-  FileSpreadsheet,
   Search,
   Printer,
-  ChevronDown,
   Menu,
-  X
+  X,
+  FileSpreadsheet,
 } from "lucide-react";
+import LanguageToggle from "@/components/LanguageToggle";
 
 interface SessionUser {
   userId: string;
@@ -51,7 +50,6 @@ export default function RoleNavbar() {
     checkSession();
   }, [pathname]);
 
-  // Close mobile menu on page transition
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [pathname]);
@@ -63,13 +61,12 @@ export default function RoleNavbar() {
     router.refresh();
   }
 
-  // Hide Navbar inside thermal print / waybill mode
   if (pathname.includes("/waybill")) return null;
 
   return (
     <nav className="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-40 print:hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
-        {/* Brand & Mobile Hamburger Toggle */}
+        {/* Brand & Mobile Hamburger */}
         <div className="flex items-center gap-3">
           {user && (
             <button
@@ -200,8 +197,10 @@ export default function RoleNavbar() {
           </div>
         </div>
 
-        {/* User Identity & Logout Controls */}
+        {/* Right side: Language Toggle + User Identity */}
         <div className="flex items-center gap-2 sm:gap-3">
+          <LanguageToggle />
+
           {loading ? (
             <div className="w-16 sm:w-20 h-7 bg-slate-800 animate-pulse rounded-lg" />
           ) : user ? (
@@ -213,13 +212,15 @@ export default function RoleNavbar() {
                 </div>
               </div>
 
-              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                user.role === "COURIER_ADMIN"
-                  ? "bg-purple-900/60 text-purple-300 border border-purple-700"
-                  : user.role === "DRIVER"
-                  ? "bg-emerald-900/60 text-emerald-300 border border-emerald-700"
-                  : "bg-blue-900/60 text-blue-300 border border-blue-700"
-              }`}>
+              <span
+                className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                  user.role === "COURIER_ADMIN"
+                    ? "bg-purple-900/60 text-purple-300 border border-purple-700"
+                    : user.role === "DRIVER"
+                    ? "bg-emerald-900/60 text-emerald-300 border border-emerald-700"
+                    : "bg-blue-900/60 text-blue-300 border border-blue-700"
+                }`}
+              >
                 {user.role === "COURIER_ADMIN" ? "Admin" : user.role}
               </span>
 
@@ -242,10 +243,9 @@ export default function RoleNavbar() {
         </div>
       </div>
 
-      {/* Mobile Drawer Menu (Visible when hamburger is clicked) */}
+      {/* Mobile Drawer Menu */}
       {isMobileMenuOpen && user && (
         <div className="md:hidden border-t border-slate-800 bg-slate-900/95 backdrop-blur px-4 py-3 space-y-1 text-sm font-medium">
-          {/* Admin Mobile Links */}
           {user.role === "COURIER_ADMIN" && (
             <>
               <Link
@@ -291,7 +291,6 @@ export default function RoleNavbar() {
             </>
           )}
 
-          {/* Merchant Mobile Links */}
           {user.role === "MERCHANT" && (
             <>
               <Link
@@ -329,7 +328,6 @@ export default function RoleNavbar() {
             </>
           )}
 
-          {/* Driver Mobile Links */}
           {user.role === "DRIVER" && (
             <Link
               href="/driver/run"
