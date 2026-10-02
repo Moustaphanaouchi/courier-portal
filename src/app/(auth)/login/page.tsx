@@ -33,11 +33,11 @@ export default function LoginPage() {
       }
 
       if (data.user.role === "COURIER_ADMIN") {
-        router.push("/admin/dispatch");
+        window.location.href = "/admin/dispatch";
       } else if (data.user.role === "DRIVER") {
-        router.push("/driver/run");
+        window.location.href = "/driver/run";
       } else {
-        router.push("/merchant/parcels/new");
+        window.location.href = ("/merchant/parcels/new");
       }
     } catch (err: any) {
       setError(err.message);
