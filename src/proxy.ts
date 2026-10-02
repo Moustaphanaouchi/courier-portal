@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 interface SessionUser {
@@ -6,28 +6,28 @@ interface SessionUser {
   email: string;
   name: string;
   role: "COURIER_ADMIN" | "MERCHANT" | "DRIVER";
-  merchantId: string | null;
-  driverId: string | null;
+  merchantId?: string | null;
+  driverId?: string | null;
 }
 
 export default function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // 1. Allow public static assets and zero-auth routes
+  // 1. Allow static files, Next.js internals, and public endpoints
   if (
     pathname.startsWith("/_next") ||
+    pathname.startsWith("/favicon.ico") ||
     pathname.startsWith("/api/auth/login") ||
     pathname.startsWith("/api/auth/register") ||
-    pathname.startsWith("/api/auth/me") ||
     pathname.startsWith("/api/track") ||
     pathname.startsWith("/track") ||
+    pathname.startsWith("/api/webhooks") ||
     pathname === "/" ||
     pathname === "/login" ||
     pathname === "/register" ||
-    pathname === "/privacy" ||
-    pathname === "/terms" ||
     pathname === "/about" ||
-    pathname.includes(".")
+    pathname === "/terms" ||
+    pathname === "/privacy"
   ) {
     return NextResponse.next();
   }
@@ -36,6 +36,9 @@ export default function proxy(req: NextRequest) {
   const sessionCookie = req.cookies.get("courier_session");
 
   if (!sessionCookie?.value) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const loginUrl = new URL("/login", req.url);
     loginUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(loginUrl);
@@ -45,44 +48,43 @@ export default function proxy(req: NextRequest) {
   try {
     session = JSON.parse(sessionCookie.value);
   } catch {
-    const response = NextResponse.redirect(new URL("/login", req.url));
+    const response = pathname.startsWith("/api/")
+      ? NextResponse.json({ error: "Invalid session" }, { status: 401 })
+      : NextResponse.redirect(new URL("/login", req.url));
     response.cookies.delete("courier_session");
     return response;
   }
 
   if (!session?.role) {
-    return NextResponse.redirect(new URL("/login", req.url));
+    const response = pathname.startsWith("/api/")
+      ? NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      : NextResponse.redirect(new URL("/login", req.url));
+    response.cookies.delete("courier_session");
+    return response;
   }
 
-  const role = session.role;
-
-  // 3. Enforce Role Isolation
-  // Admin-only routes
-  if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin") || pathname.startsWith("/api/settlements")) {
-    if (role !== "COURIER_ADMIN") {
-      const redirectPath = role === "DRIVER" ? "/driver/run" : "/merchant/parcels/new";
-      return NextResponse.redirect(new URL(redirectPath, req.url));
-    }
+  // 3. Role-based Route Protection for Pages
+  if (pathname.startsWith("/admin") && session.role !== "COURIER_ADMIN") {
+    return NextResponse.redirect(new URL(session.role === "MERCHANT" ? "/merchant/parcels" : "/driver/run", req.url));
   }
 
-  // Driver-only routes
-  if (pathname.startsWith("/driver") || pathname.startsWith("/api/driver")) {
-    if (role !== "DRIVER" && role !== "COURIER_ADMIN") {
-      return NextResponse.redirect(new URL("/merchant/parcels/new", req.url));
-    }
+  if (pathname.startsWith("/merchant") && session.role !== "MERCHANT") {
+    return NextResponse.redirect(new URL(session.role === "COURIER_ADMIN" ? "/admin/dispatch" : "/driver/run", req.url));
   }
 
-  // Merchant-only routes
-  if (pathname.startsWith("/merchant") || pathname.startsWith("/api/merchant")) {
-    if (role !== "MERCHANT" && role !== "COURIER_ADMIN") {
-      const redirectPath = role === "DRIVER" ? "/driver/run" : "/admin/dispatch";
-      return NextResponse.redirect(new URL(redirectPath, req.url));
-    }
+  if (pathname.startsWith("/driver") && session.role !== "DRIVER") {
+    return NextResponse.redirect(new URL(session.role === "COURIER_ADMIN" ? "/admin/dispatch" : "/merchant/parcels", req.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    "/admin/:path*",
+    "/merchant/:path*",
+    "/driver/:path*",
+    "/api/:path*",
+    "/((?!_next/static|_next/image|favicon.ico).*)",
+  ],
 };
